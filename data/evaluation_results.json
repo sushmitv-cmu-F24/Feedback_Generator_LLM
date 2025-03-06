@@ -1,0 +1,1485 @@
+{
+    "modibhagyashree": {
+        "closest_matches": [],
+        "retrieved_feedbacks": [],
+        "generated_feedback": "Overall Assessment:\nThe provided code is relatively small and simple, but it still contains some violations of SOLID principles. While it does not have a lot of issues, there are some that need to be addressed for the code to be more maintainable and scalable.\n\nSOLID Violations:\n1. Single Responsibility Principle (SRP): The User class has 9 methods, suggesting too many responsibilities. This is a violation of the SRP, as the class should have only one reason to change. Suggestion: Extract some of the methods into separate classes or interfaces to improve modularity and reduce coupling between classes.\n2. Dependency Inversion Principle (DIP): The UserService class depends on the concrete PostgresDriver class. This is a violation of DIP, as it makes the UserService class tightly coupled to the database layer. Suggestion: Use constructor injection or dependency injection to provide the PostgresDriver class as an interface and decouple the UserService class from the concrete implementation.\n3. Open-Closed Principle (OCP): The NotificationService class has a complex if-else block that is difficult to maintain and test. This is a violation of OCP, as it is not open for extension but closed for modification. Suggestion: Extract the different notification types into separate classes or interfaces to make the code more modular and easier to extend.\n\nImprovement Suggestions:\n1. Refactor the User class by extracting some of the methods into separate classes or interfaces. This will improve the modularity and reduce coupling between classes, making it easier to maintain and evolve the system.\n2. Use constructor injection or dependency injection to decouple the UserService class from the concrete implementation of the PostgresDriver class. This will make the code more flexible and easier to test.\n3. Extract the different notification types into separate classes or interfaces to make the code more modular and easier to extend. This will improve the maintainability and scalability of the system.",
+        "parsed_classes": {
+            "SolidPrinciples/src/Main.java": {
+                "Main": {
+                    "methods": [
+                        {
+                            "name": "main",
+                            "return_type": "void",
+                            "modifiers": [
+                                "static",
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [],
+                    "extends": null,
+                    "implements": [],
+                    "instantiates": [
+                        "PostgresDriver"
+                    ]
+                }
+            },
+            "SolidPrinciples/src/solid/user/User.java": {
+                "User": {
+                    "methods": [
+                        {
+                            "name": "calculateTax",
+                            "return_type": "BasicType(dimensions=[], name=double)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        },
+                        {
+                            "name": "deleteAccount",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        },
+                        {
+                            "name": "getId",
+                            "return_type": "BasicType(dimensions=[], name=int)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        },
+                        {
+                            "name": "setId",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        },
+                        {
+                            "name": "getUsername",
+                            "return_type": "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        },
+                        {
+                            "name": "setUsername",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "getAge",
+                            "return_type": "BasicType(dimensions=[], name=int)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        },
+                        {
+                            "name": "setAge",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        },
+                        {
+                            "name": "toString",
+                            "return_type": "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        }
+                    ],
+                    "fields": [
+                        {
+                            "name": "id",
+                            "type": "BasicType(dimensions=[], name=int)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        },
+                        {
+                            "name": "username",
+                            "type": "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        },
+                        {
+                            "name": "age",
+                            "type": "BasicType(dimensions=[], name=int)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        },
+                        {
+                            "name": "salary",
+                            "type": "BasicType(dimensions=[], name=double)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        }
+                    ],
+                    "extends": null,
+                    "implements": []
+                }
+            },
+            "SolidPrinciples/src/solid/user/AdminUser.java": {
+                "AdminUser": {
+                    "methods": [
+                        {
+                            "name": "canDelete",
+                            "return_type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        }
+                    ],
+                    "fields": [
+                        {
+                            "name": "hasSuperAdminRights",
+                            "type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        }
+                    ],
+                    "extends": "User",
+                    "implements": []
+                }
+            },
+            "SolidPrinciples/src/solid/persistence/DatabaseDriver.java": {
+                "DatabaseDriver": {
+                    "methods": [
+                        {
+                            "name": "save",
+                            "return_type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "query",
+                            "return_type": "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                            "modifiers": [],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        },
+                        {
+                            "name": "delete",
+                            "return_type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        }
+                    ],
+                    "type": "interface",
+                    "extends": []
+                }
+            },
+            "SolidPrinciples/src/solid/service/UserService.java": {
+                "UserService": {
+                    "methods": [
+                        {
+                            "name": "getUserById",
+                            "return_type": "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        },
+                        {
+                            "name": "addUser",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "removeUser",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "sendTaxNotification",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [
+                        {
+                            "name": "notificationService",
+                            "type": "ReferenceType(arguments=None, dimensions=[], name=NotificationService, sub_type=None)",
+                            "modifiers": [
+                                "private",
+                                "final"
+                            ]
+                        },
+                        {
+                            "name": "databaseDriver",
+                            "type": "ReferenceType(arguments=None, dimensions=[], name=DatabaseDriver, sub_type=None)",
+                            "modifiers": [
+                                "private",
+                                "final"
+                            ]
+                        }
+                    ],
+                    "extends": null,
+                    "implements": [
+                        "UserOperations"
+                    ]
+                }
+            },
+            "SolidPrinciples/src/solid/service/UserOperations.java": {
+                "UserOperations": {
+                    "methods": [
+                        {
+                            "name": "addUser",
+                            "return_type": "void",
+                            "modifiers": [],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "removeUser",
+                            "return_type": "void",
+                            "modifiers": [],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "type": "interface",
+                    "extends": []
+                }
+            },
+            "SolidPrinciples/src/solid/service/NotificationService.java": {
+                "NotificationService": {
+                    "methods": [
+                        {
+                            "name": "sendNotification",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [
+                        {
+                            "name": "senders",
+                            "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=NotificationSender, sub_type=None))], dimensions=[], name=Map, sub_type=None)",
+                            "modifiers": [
+                                "private",
+                                "final"
+                            ]
+                        }
+                    ],
+                    "extends": null,
+                    "implements": []
+                }
+            },
+            "SolidPrinciples/src/solid/persistence/drivers/PostgresDriver.java": {
+                "PostgresDriver": {
+                    "methods": [
+                        {
+                            "name": "save",
+                            "return_type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "query",
+                            "return_type": "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        },
+                        {
+                            "name": "delete",
+                            "return_type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        }
+                    ],
+                    "fields": [
+                        {
+                            "name": "users",
+                            "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
+                            "modifiers": [
+                                "private",
+                                "static"
+                            ]
+                        }
+                    ],
+                    "extends": null,
+                    "implements": [
+                        "DatabaseDriver"
+                    ]
+                }
+            },
+            "SolidPrinciples/src/solid/service/senders/EmailNotificationSender.java": {
+                "EmailNotificationSender": {
+                    "methods": [
+                        {
+                            "name": "send",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [],
+                    "extends": null,
+                    "implements": [
+                        "NotificationSender"
+                    ]
+                }
+            },
+            "SolidPrinciples/src/solid/service/senders/SMSNotificationSender.java": {
+                "SMSNotificationSender": {
+                    "methods": [
+                        {
+                            "name": "send",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [],
+                    "extends": null,
+                    "implements": [
+                        "NotificationSender"
+                    ]
+                }
+            },
+            "SolidPrinciples/src/solid/service/senders/PushNotificationSender.java": {
+                "PushNotificationSender": {
+                    "methods": [
+                        {
+                            "name": "send",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [],
+                    "extends": null,
+                    "implements": [
+                        "NotificationSender"
+                    ]
+                }
+            },
+            "SolidPrinciples/src/solid/service/senders/NotificationSender.java": {
+                "NotificationSender": {
+                    "methods": [
+                        {
+                            "name": "send",
+                            "return_type": "void",
+                            "modifiers": [],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "type": "interface",
+                    "extends": []
+                }
+            }
+        },
+        "detected_violations": [
+            {
+                "principle": "SRP",
+                "location": "User.java - User",
+                "description": "Class has 9 methods, suggesting too many responsibilities"
+            },
+            {
+                "principle": "DIP",
+                "location": "UserService.java",
+                "description": "Missing constructor injection for database driver dependency"
+            }
+        ],
+        "solid_violations": [
+            "DIP",
+            "SRP",
+            "OCP"
+        ]
+    },
+    "zhoumichelle": {
+        "closest_matches": [],
+        "retrieved_feedbacks": [],
+        "generated_feedback": "Overall Assessment:\n    The code provides a good foundation for adhering to SOLID principles. However, it has some minor issues that could be improved upon.\n    \n    SOLID Violations:\n    \n    1. Single Responsibility Principle (SRP) - UserService.java violates SRP by having multiple responsibilities such as managing user data and sending notifications. To fix this, we can split the class into two separate classes, one for managing user data and another for sending notifications.\n    2. Open-Closed Principle (OCP) - UserService.java violates OCP by having a large number of methods that need to be modified whenever a new notification type is added. To fix this, we can use the Template Method pattern to encapsulate the common functionality and leave the specific notification type implementation for subclasses.\n    3. Dependency Inversion Principle (DIP) - UserService.java violates DIP by directly instantiating the PostgresDriver instead of using dependency injection. To fix this, we can create an interface for the database driver and use constructor injection to pass in an instance of the appropriate driver implementation.\n    \n    Improvement Suggestions:\n    \n    1. Use a factory pattern to create instances of the database driver instead of directly instantiating it. This will allow us to switch between different database drivers more easily if needed.\n    2. Extract the common functionality from the UserService class into its own class or use a library like Hibernate to handle the data access layer. This will make the code easier to maintain and test.",
+        "parsed_classes": {
+            "SolidPrinciples/src/Main.java": {
+                "Main": {
+                    "methods": [
+                        {
+                            "name": "main",
+                            "return_type": "void",
+                            "modifiers": [
+                                "static",
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [],
+                    "extends": null,
+                    "implements": []
+                }
+            },
+            "SolidPrinciples/src/solid/user/User.java": {
+                "User": {
+                    "methods": [
+                        {
+                            "name": "calculateTax",
+                            "return_type": "BasicType(dimensions=[], name=double)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        },
+                        {
+                            "name": "deleteAccount",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        },
+                        {
+                            "name": "getId",
+                            "return_type": "BasicType(dimensions=[], name=int)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        },
+                        {
+                            "name": "setId",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        },
+                        {
+                            "name": "getUsername",
+                            "return_type": "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        },
+                        {
+                            "name": "setUsername",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "getAge",
+                            "return_type": "BasicType(dimensions=[], name=int)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        },
+                        {
+                            "name": "setAge",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        },
+                        {
+                            "name": "toString",
+                            "return_type": "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        },
+                        {
+                            "name": "canDelete",
+                            "return_type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        }
+                    ],
+                    "fields": [
+                        {
+                            "name": "id",
+                            "type": "BasicType(dimensions=[], name=int)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        },
+                        {
+                            "name": "username",
+                            "type": "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        },
+                        {
+                            "name": "age",
+                            "type": "BasicType(dimensions=[], name=int)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        },
+                        {
+                            "name": "salary",
+                            "type": "BasicType(dimensions=[], name=double)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        },
+                        {
+                            "name": "role",
+                            "type": "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
+                            "modifiers": [
+                                "public"
+                            ]
+                        }
+                    ],
+                    "extends": null,
+                    "implements": []
+                }
+            },
+            "SolidPrinciples/src/solid/user/AdminUser.java": {
+                "AdminUser": {
+                    "methods": [
+                        {
+                            "name": "canDelete",
+                            "return_type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        }
+                    ],
+                    "fields": [
+                        {
+                            "name": "hasSuperAdminRights",
+                            "type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        }
+                    ],
+                    "extends": "User",
+                    "implements": []
+                }
+            },
+            "SolidPrinciples/src/solid/service/UserService.java": {
+                "UserService": {
+                    "methods": [
+                        {
+                            "name": "getUserById",
+                            "return_type": "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        },
+                        {
+                            "name": "addUser",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "removeUser",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "sendTaxNotification",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [
+                        {
+                            "name": "notificationService",
+                            "type": "ReferenceType(arguments=None, dimensions=[], name=NotificationService, sub_type=None)",
+                            "modifiers": [
+                                "private",
+                                "final"
+                            ]
+                        },
+                        {
+                            "name": "databaseDriver",
+                            "type": "ReferenceType(arguments=None, dimensions=[], name=DatabaseDriver, sub_type=None)",
+                            "modifiers": [
+                                "private",
+                                "final"
+                            ]
+                        }
+                    ],
+                    "extends": null,
+                    "implements": [
+                        "UserOperations"
+                    ],
+                    "instantiates": [
+                        "PostgresDriver"
+                    ]
+                }
+            },
+            "SolidPrinciples/src/solid/service/UserOperations.java": {
+                "UserOperations": {
+                    "methods": [
+                        {
+                            "name": "addUser",
+                            "return_type": "void",
+                            "modifiers": [],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "removeUser",
+                            "return_type": "void",
+                            "modifiers": [],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "type": "interface",
+                    "extends": []
+                }
+            },
+            "SolidPrinciples/src/solid/service/NotificationService.java": {
+                "NotificationService": {
+                    "methods": [
+                        {
+                            "name": "sendNotification",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [
+                        {
+                            "name": "senders",
+                            "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=NotificationSender, sub_type=None))], dimensions=[], name=Map, sub_type=None)",
+                            "modifiers": [
+                                "private",
+                                "final"
+                            ]
+                        }
+                    ],
+                    "extends": null,
+                    "implements": []
+                }
+            },
+            "SolidPrinciples/src/solid/persistence/drivers/PostgresDriver.java": {
+                "PostgresDriver": {
+                    "methods": [
+                        {
+                            "name": "save",
+                            "return_type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "query",
+                            "return_type": "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        },
+                        {
+                            "name": "delete",
+                            "return_type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        }
+                    ],
+                    "fields": [
+                        {
+                            "name": "users",
+                            "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
+                            "modifiers": [
+                                "private",
+                                "static"
+                            ]
+                        }
+                    ],
+                    "extends": null,
+                    "implements": [
+                        "DatabaseDriver"
+                    ]
+                }
+            },
+            "SolidPrinciples/src/solid/persistence/drivers/DatabaseDriver.java": {
+                "DatabaseDriver": {
+                    "methods": [
+                        {
+                            "name": "save",
+                            "return_type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "query",
+                            "return_type": "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                            "modifiers": [],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        },
+                        {
+                            "name": "delete",
+                            "return_type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        }
+                    ],
+                    "type": "interface",
+                    "extends": []
+                }
+            },
+            "SolidPrinciples/src/solid/service/sender/EmailNotificationSender.java": {
+                "EmailNotificationSender": {
+                    "methods": [
+                        {
+                            "name": "send",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [],
+                    "extends": null,
+                    "implements": [
+                        "NotificationSender"
+                    ]
+                }
+            },
+            "SolidPrinciples/src/solid/service/sender/SMSNotificationSender.java": {
+                "SMSNotificationSender": {
+                    "methods": [
+                        {
+                            "name": "send",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [],
+                    "extends": null,
+                    "implements": [
+                        "NotificationSender"
+                    ]
+                }
+            },
+            "SolidPrinciples/src/solid/service/sender/PushNotificationSender.java": {
+                "PushNotificationSender": {
+                    "methods": [
+                        {
+                            "name": "send",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [],
+                    "extends": null,
+                    "implements": [
+                        "NotificationSender"
+                    ]
+                }
+            },
+            "SolidPrinciples/src/solid/service/sender/NotificationSender.java": {
+                "NotificationSender": {
+                    "methods": [
+                        {
+                            "name": "send",
+                            "return_type": "void",
+                            "modifiers": [],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "type": "interface",
+                    "extends": []
+                }
+            }
+        },
+        "detected_violations": [
+            {
+                "principle": "SRP",
+                "location": "User.java - User",
+                "description": "Class has 10 methods, suggesting too many responsibilities"
+            },
+            {
+                "principle": "DIP",
+                "location": "UserService.java",
+                "description": "Directly instantiates PostgresDriver instead of using dependency injection"
+            },
+            {
+                "principle": "DIP",
+                "location": "UserService.java",
+                "description": "Missing constructor injection for database driver dependency"
+            },
+            {
+                "principle": "package_structure",
+                "location": "DatabaseDriver in solid.persistence.drivers",
+                "description": "Interface DatabaseDriver should be in package solid.persistence, but found in solid.persistence.drivers"
+            }
+        ],
+        "solid_violations": [
+            "DIP",
+            "SRP"
+        ]
+    },
+    "yualex": {
+        "closest_matches": [],
+        "retrieved_feedbacks": [],
+        "generated_feedback": "## Overall Assessment\n    While the code adheres to some SOLID principles, it fails to follow others. The detected violations suggest that the developer is still learning about SOLID principles and may benefit from additional practice and guidance. However, there are also some positive design decisions, such as a clear separation of concerns between the UserService and PostgresDriver classes.\n    \n    ## SOLID Violations\n    1. Single Responsibility Principle (SRP) - User.java - User has 9 methods, suggesting too many responsibilities. This violates SRP as a class should have only one reason to change. Consider breaking up the User class into smaller classes or combining related functionality into a single class.\n    2. Dependency Inversion Principle (DIP) - UserService.java - Directly instantiates PostgresDriver instead of using dependency injection. This violates DIP as a high-level module should not depend on a low-level module. Consider replacing the direct instantiation with constructor injection or using a DI framework to manage dependencies.\n    3. Dependency Inversion Principle (DIP) - UserService.java - Tightly coupled to PostgresDriver concrete class instead of depending on an abstraction. This violates DIP as a high-level module should not depend on a specific concrete implementation but rather a more general abstraction. Consider creating an interface for the PostgresDriver and having the UserService depend on that instead of the concrete class.\n    4. Dependency Inversion Principle (DIP) - UserService.java - Missing constructor injection for database driver dependency. This violates DIP as the UserService depends on a specific implementation of an abstraction. Consider using constructor injection to provide the PostgresDriver instance instead of creating it within the class itself.\n    \n    ## Improvement Suggestions\n    1. Break up the User class into smaller classes with single responsibilities to improve SRP adherence.\n    2. Use dependency injection and constructor injection to follow DIP and reduce coupling between modules.\n    3. Consider using a DI framework like Spring or Guice to manage dependencies and simplify constructor injection.",
+        "parsed_classes": {
+            "SolidPrinciples/src/Main.java": {
+                "Main": {
+                    "methods": [
+                        {
+                            "name": "main",
+                            "return_type": "void",
+                            "modifiers": [
+                                "static",
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [],
+                    "extends": null,
+                    "implements": []
+                }
+            },
+            "SolidPrinciples/src/solid/user/User.java": {
+                "User": {
+                    "methods": [
+                        {
+                            "name": "calculateTax",
+                            "return_type": "BasicType(dimensions=[], name=double)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        },
+                        {
+                            "name": "deleteAccount",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        },
+                        {
+                            "name": "getId",
+                            "return_type": "BasicType(dimensions=[], name=int)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        },
+                        {
+                            "name": "setId",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        },
+                        {
+                            "name": "getUsername",
+                            "return_type": "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        },
+                        {
+                            "name": "setUsername",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "getAge",
+                            "return_type": "BasicType(dimensions=[], name=int)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        },
+                        {
+                            "name": "setAge",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        },
+                        {
+                            "name": "toString",
+                            "return_type": "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        }
+                    ],
+                    "fields": [
+                        {
+                            "name": "id",
+                            "type": "BasicType(dimensions=[], name=int)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        },
+                        {
+                            "name": "username",
+                            "type": "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        },
+                        {
+                            "name": "age",
+                            "type": "BasicType(dimensions=[], name=int)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        },
+                        {
+                            "name": "salary",
+                            "type": "BasicType(dimensions=[], name=double)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        }
+                    ],
+                    "extends": null,
+                    "implements": []
+                }
+            },
+            "SolidPrinciples/src/solid/user/AdminUser.java": {
+                "AdminUser": {
+                    "methods": [
+                        {
+                            "name": "checkPermissions",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": []
+                        }
+                    ],
+                    "fields": [
+                        {
+                            "name": "hasSuperAdminRights",
+                            "type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        }
+                    ],
+                    "extends": "User",
+                    "implements": []
+                }
+            },
+            "SolidPrinciples/src/solid/persistence/PostgresDriver.java": {
+                "PostgresDriver": {
+                    "methods": [
+                        {
+                            "name": "save",
+                            "return_type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "query",
+                            "return_type": "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        },
+                        {
+                            "name": "delete",
+                            "return_type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        }
+                    ],
+                    "fields": [
+                        {
+                            "name": "users",
+                            "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
+                            "modifiers": [
+                                "private",
+                                "static"
+                            ]
+                        }
+                    ],
+                    "extends": null,
+                    "implements": [
+                        "DatabaseDriver"
+                    ]
+                }
+            },
+            "SolidPrinciples/src/solid/persistence/DatabaseDriver.java": {
+                "DatabaseDriver": {
+                    "methods": [
+                        {
+                            "name": "save",
+                            "return_type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "query",
+                            "return_type": "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                            "modifiers": [],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        },
+                        {
+                            "name": "delete",
+                            "return_type": "BasicType(dimensions=[], name=boolean)",
+                            "modifiers": [],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        }
+                    ],
+                    "type": "interface",
+                    "extends": []
+                }
+            },
+            "SolidPrinciples/src/solid/service/UserService.java": {
+                "UserService": {
+                    "methods": [
+                        {
+                            "name": "getUserById",
+                            "return_type": "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "BasicType(dimensions=[], name=int)"
+                            ]
+                        },
+                        {
+                            "name": "addUser",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "removeUser",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "sendTaxNotification",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [
+                        {
+                            "name": "postgresDriver",
+                            "type": "ReferenceType(arguments=None, dimensions=[], name=PostgresDriver, sub_type=None)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        },
+                        {
+                            "name": "notificationService",
+                            "type": "ReferenceType(arguments=None, dimensions=[], name=NotificationService, sub_type=None)",
+                            "modifiers": [
+                                "private"
+                            ]
+                        }
+                    ],
+                    "extends": null,
+                    "implements": [
+                        "UserOperations"
+                    ],
+                    "instantiates": [
+                        "PostgresDriver"
+                    ]
+                }
+            },
+            "SolidPrinciples/src/solid/service/UserOperations.java": {
+                "UserOperations": {
+                    "methods": [
+                        {
+                            "name": "addUser",
+                            "return_type": "void",
+                            "modifiers": [],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        },
+                        {
+                            "name": "removeUser",
+                            "return_type": "void",
+                            "modifiers": [],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "type": "interface",
+                    "extends": []
+                }
+            },
+            "SolidPrinciples/src/solid/service/notification/EmailNotificationSender.java": {
+                "EmailNotificationSender": {
+                    "methods": [
+                        {
+                            "name": "sendNotification",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [],
+                    "extends": null,
+                    "implements": [
+                        "NotificationSender"
+                    ]
+                }
+            },
+            "SolidPrinciples/src/solid/service/notification/NotificationFactory.java": {
+                "NotificationFactory": {
+                    "methods": [
+                        {
+                            "name": "getNotificationSender",
+                            "return_type": "ReferenceType(arguments=None, dimensions=[], name=NotificationSender, sub_type=None)",
+                            "modifiers": [
+                                "static",
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [],
+                    "extends": null,
+                    "implements": []
+                }
+            },
+            "SolidPrinciples/src/solid/service/notification/SMSNotificationSender.java": {
+                "SMSNotificationSender": {
+                    "methods": [
+                        {
+                            "name": "sendNotification",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [],
+                    "extends": null,
+                    "implements": [
+                        "NotificationSender"
+                    ]
+                }
+            },
+            "SolidPrinciples/src/solid/service/notification/NotificationService.java": {
+                "NotificationService": {
+                    "methods": [
+                        {
+                            "name": "sendTaxNotification",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [],
+                    "extends": null,
+                    "implements": []
+                }
+            },
+            "SolidPrinciples/src/solid/service/notification/PushNotificationSender.java": {
+                "PushNotificationSender": {
+                    "methods": [
+                        {
+                            "name": "sendNotification",
+                            "return_type": "void",
+                            "modifiers": [
+                                "public"
+                            ],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "fields": [],
+                    "extends": null,
+                    "implements": [
+                        "NotificationSender"
+                    ]
+                }
+            },
+            "SolidPrinciples/src/solid/service/notification/NotificationSender.java": {
+                "NotificationSender": {
+                    "methods": [
+                        {
+                            "name": "sendNotification",
+                            "return_type": "void",
+                            "modifiers": [],
+                            "parameters": [
+                                "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                                "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
+                            ]
+                        }
+                    ],
+                    "type": "interface",
+                    "extends": []
+                }
+            }
+        },
+        "detected_violations": [
+            {
+                "principle": "SRP",
+                "location": "User.java - User",
+                "description": "Class has 9 methods, suggesting too many responsibilities"
+            },
+            {
+                "principle": "DIP",
+                "location": "UserService.java",
+                "description": "Directly instantiates PostgresDriver instead of using dependency injection"
+            },
+            {
+                "principle": "DIP",
+                "location": "UserService.java",
+                "description": "Tightly coupled to PostgresDriver concrete class instead of depending on an abstraction"
+            },
+            {
+                "principle": "DIP",
+                "location": "UserService.java",
+                "description": "Missing constructor injection for database driver dependency"
+            },
+            {
+                "principle": "package_structure",
+                "location": "Project Structure",
+                "description": "Missing required package: solid.persistence.drivers"
+            },
+            {
+                "principle": "package_structure",
+                "location": "PostgresDriver in solid.persistence",
+                "description": "Implementation PostgresDriver should be in package solid.persistence.drivers, but found in solid.persistence"
+            }
+        ],
+        "solid_violations": [
+            "DIP",
+            "SRP"
+        ]
+    }
+}

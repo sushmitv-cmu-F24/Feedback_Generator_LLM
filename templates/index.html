@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Automated Assignment Feedback</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Student Submissions</h1>
+        
+        <div class="card mb-4">
+            <div class="card-header">Upload New Submission</div>
+            <div class="card-body">
+                <form action="{{ url_for('upload_submission') }}" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Select ZIP file</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".zip" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">Submissions ({{ submissions|length }})</div>
+            <div class="card-body">
+                {% if submissions %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Submission Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for submission in submissions %}
+                            <tr>
+                                <td>{{ submission.student_id }}</td>
+                                <td>{{ submission.date }}</td>
+                                <td>
+                                    {% if submission.has_feedback %}
+                                    <a href="{{ url_for('view_feedback', student_id=submission.student_id) }}" class="btn btn-primary btn-sm">
+                                        View Feedback
+                                    </a>
+                                    {% else %}
+                                    <a href="{{ url_for('generate_feedback', student_id=submission.student_id) }}" class="btn btn-outline-primary btn-sm">
+                                        Generate Feedback
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center">No submissions found. Upload a ZIP file to get started.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

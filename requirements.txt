@@ -1,0 +1,19 @@
+# Backend dependencies
+PyPDF2==3.0.1
+spacy==3.6.1
+nltk==3.8.1
+numpy==1.24.3
+faiss-cpu==1.7.4
+sentence-transformers
+javalang
+huggingface_hub>=0.14.1
+ollama
+
+# UI dependencies
+Flask
+Werkzeug
+Jinja2
+waitress
+
+# Spacy language model
+en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.6.0/en_core_web_sm-3.6.0.tar.gz

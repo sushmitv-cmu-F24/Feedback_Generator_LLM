@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Feedback for {{ student_id }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .code-viewer {
+            max-height: 500px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .violation-badge {
+            font-size: 0.8em;
+            padding: 0.25em 0.5em;
+            margin-right: 0.5em;
+            border-radius: 0.25em;
+        }
+        .violation-SRP { background-color: #ffdddd; color: #990000; }
+        .violation-OCP { background-color: #ddffdd; color: #006600; }
+        .violation-LSP { background-color: #ddddff; color: #000099; }
+        .violation-ISP { background-color: #ffffdd; color: #999900; }
+        .violation-DIP { background-color: #ffddff; color: #990099; }
+        .violation-package_structure { background-color: #ddffff; color: #009999; }
+        
+        /* Make markdown content use the same font as the rest of the page */
+        .markdown-content {
+            font-family: inherit;
+            font-size: inherit;
+        }
+        /* Make headings consistent with black color and bold */
+        .markdown-content h2 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            color: #000;
+            font-family: inherit;
+            font-weight: bold;
+        }
+        .markdown-content ul, .markdown-content ol {
+            margin-bottom: 1rem;
+            font-family: inherit;
+        }
+        .markdown-content li {
+            margin-bottom: 0.5rem;
+            font-family: inherit;
+        }
+        .markdown-content p {
+            margin-bottom: 1rem;
+            font-family: inherit;
+        }
+        .markdown-content code {
+            font-family: monospace;
+        }
+        /* Class name emphasis in violations */
+        .class-name {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Feedback for {{ student_id }}</h1>
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary mb-4">Back to List</a>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Feedback section -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Generated Feedback</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="markdown-content">{{ feedback.generated_feedback }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <!-- Move metrics to a sidebar position -->
+                <div class="card mb-4">
+                    <div class="card-header">Detected Violations</div>
+                    <div class="card-body p-2"> <!-- Reduced padding -->
+                        {% if feedback.detected_violations %}
+                        <ul class="list-group list-group-flush">
+                            {% for violation in feedback.detected_violations %}
+                            <li class="list-group-item p-2"> <!-- Reduced padding -->
+                                <span class="violation-badge violation-{{ violation.principle }}">{{ violation.principle }}</span>
+                                {% if 'location' in violation %}
+                                    <small>
+                                        <span class="class-name">{{ violation.location }}</span>: 
+                                        {{ violation.description }}
+                                    </small>
+                                {% else %}
+                                    <small>{{ violation.description }}</small>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="text-center">No violations detected</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Simplified metrics display -->
+                <div class="card mb-4">
+                    <div class="card-header">Feedback Quality</div>
+                    <div class="card-body p-2"> <!-- Reduced padding -->
+                        {% if feedback.quality_metrics %}
+                        <div class="text-center mb-2">
+                            <h5>Overall: {{ (feedback.quality_metrics.overall_score * 100)|round|int }}%</h5>
+                            <div class="progress mb-2">
+                                {% set score = feedback.quality_metrics.overall_score %}
+                                {% set percent = (score * 100)|int %}
+                                <div class="progress-bar 
+                                    {% if score >= 0.8 %}bg-success
+                                    {% elif score >= 0.6 %}bg-info
+                                    {% elif score >= 0.4 %}bg-warning
+                                    {% else %}bg-danger{% endif %}" 
+                                    role="progressbar" 
+                                    style="width: {{ percent }}%;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Compact metrics -->
+                        <div class="row g-1 text-center">
+                            <div class="col-6">
+                                <small>Specificity: {{ (feedback.quality_metrics.specificity * 100)|round|int }}%</small>
+                            </div>
+                            <div class="col-6">
+                                <small>Actionability: {{ (feedback.quality_metrics.actionability * 100)|round|int }}%</small>
+                            </div>
+                            <div class="col-6">
+                                <small>Accuracy: {{ (feedback.quality_metrics.accuracy * 100)|round|int }}%</small>
+                            </div>
+                            <div class="col-6">
+                                <small>Completeness: {{ (feedback.quality_metrics.completeness * 100)|round|int }}%</small>
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="text-center">No metrics available</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if feedback.closest_matches %}
+                <div class="card mb-4">
+                    <div class="card-header">Similar Submissions</div>
+                    <div class="card-body p-2">
+                        <ul class="list-group list-group-flush">
+                            {% for match in feedback.closest_matches %}
+                            <li class="list-group-item p-2">{{ match }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Collapsible code section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#codeSection">
+                    Toggle Java Files
+                </button>
+            </div>
+            <div class="collapse" id="codeSection">
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="codeTabs" role="tablist">
+                        {% for filename, content in java_files.items() %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {% if loop.first %}active{% endif %}" 
+                                    id="tab-{{ loop.index }}" 
+                                    data-bs-toggle="tab" 
+                                    data-bs-target="#content-{{ loop.index }}" 
+                                    type="button" 
+                                    role="tab">
+                                {{ filename.split('/')[-1] }}
+                            </button>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="tab-content" id="codeTabsContent">
+                        {% for filename, content in java_files.items() %}
+                        <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
+                             id="content-{{ loop.index }}" 
+                             role="tabpanel">
+                            <div class="code-viewer">
+                                <pre><code>{{ content }}</code></pre>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+    <script>
+        // Render markdown content with proper settings
+        document.addEventListener('DOMContentLoaded', function() {
+            const markdownElements = document.querySelectorAll('.markdown-content');
+            
+            // Set up marked options for proper formatting
+            marked.setOptions({
+                breaks: true,            // Add line breaks on single newlines
+                gfm: true,               // GitHub Flavored Markdown
+                headerIds: false,        // Don't add ids to headers
+                mangle: false            // Don't mangle email addresses
+            });
+            
+            markdownElements.forEach(function(element) {
+                element.innerHTML = marked.parse(element.textContent);
+            });
+        });
+    </script>
+</body>
+</html>
