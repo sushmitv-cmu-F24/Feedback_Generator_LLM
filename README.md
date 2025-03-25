@@ -103,6 +103,4 @@ python evaluation_phase.py path/to/submission.zip
 
 1. Optimize the evaluation process
 2. Fine tune the model for feedback generation
-3. Add a heading using index.html
-4. Dockerize and deploy the service
-5. Add metrics like BLEU, create list of 4-5 metrics
+3. Dockerize and deploy the service
