@@ -54,7 +54,10 @@ CONFIG = {
     }
 }
 
+# Create necessary directories
 os.makedirs("data", exist_ok=True)
+os.makedirs(CONFIG["comments_folder"], exist_ok=True)
+os.makedirs(CONFIG["submissions_folder"], exist_ok=True)
 
 ### --- STEP 1: Extract & Preprocess Feedback --- ###
 def clean_text(text):
@@ -397,44 +400,102 @@ def detect_solid_violations_from_code(parsed_classes):
     return violations
 
 ### --- STEP 4: FAISS Embedding Storage --- ###
+def get_improved_submission_embedding(java_files, parsed_classes):
+    """Generate improved embedding for a submission with better text representation"""
+    # Create a more comprehensive text representation
+    java_text = " ".join(java_files.values())
+    
+    # Extract package structure
+    packages = set()
+    for content in java_files.values():
+        package_match = re.search(r'package\s+([\w.]+);', content)
+        if package_match:
+            packages.add(package_match.group(1))
+    
+    # Include detailed class structure
+    class_info = []
+    for class_name, class_info_dict in parsed_classes.items():
+        # Class type
+        class_type = "interface" if class_info_dict.get("type") == "interface" else "class"
+        class_info.append(f"{class_type} {class_name}")
+        
+        # Add inheritance info
+        if class_info_dict.get("extends"):
+            class_info.append(f"{class_name} extends {class_info_dict.get('extends')}")
+        
+        if class_info_dict.get("implements"):
+            implements_list = class_info_dict.get("implements", [])
+            if implements_list:
+                implements = " ".join(implements_list)
+                class_info.append(f"{class_name} implements {implements}")
+        
+        # Add methods (with extra weight for method names)
+        for method in class_info_dict.get("methods", []):
+            signature = f"{method.get('name')} {method.get('name')} {method.get('return_type', '')}"
+            class_info.append(signature)
+    
+    # Add special focus on SOLID-related terms
+    solid_terms = [
+        "responsibility", "single responsibility", "open closed", "liskov", 
+        "interface segregation", "dependency injection", "abstraction",
+        "DatabaseDriver", "PostgresDriver", "UserService", "dependency"
+    ]
+    
+    # Add SOLID terms to the embedding if they appear in the code
+    solid_text = " ".join([term for term in solid_terms if term.lower() in java_text.lower()])
+    
+    # Combine all text elements with differential weighting
+    combined_text = (
+        java_text + " " +
+        " ".join(packages) + " " + " ".join(packages) + " " +  # Double weight for packages
+        " ".join(class_info) + " " +
+        solid_text + " " + solid_text + " " + solid_text  # Triple weight for SOLID terms
+    )
+    
+    # Generate embedding
+    print(f"Generating embedding from text of length: {len(combined_text)}")
+    embedding = embedding_model.encode([combined_text], normalize_embeddings=True)
+    return np.array(embedding, dtype=np.float32)[0]  # Return the first embedding vector, not in a batch
+
 def store_feedback_embeddings(processed_data):
-    """Create and store embeddings for feedback using FAISS."""
-    feedback_texts = []
+    """Create and store embeddings for feedback using FAISS with improved embedding generation."""
+    embeddings = []
     student_ids = []
     
+    print(f"Building embeddings for {len(processed_data)} submissions...")
+    
     for student_id, data in processed_data.items():
-        # Only embed submissions with feedback
-        if data.get("feedback"):
-            # Combine all feedback sections into a single text for embedding
-            combined_feedback = ""
-            for section, text in data["feedback"].items():
-                if text:
-                    combined_feedback += f"{section}: {text}\n"
-            
-            # Include code structure in the embedding to improve matching
-            code_structure = json.dumps(data.get("parsed_classes", {}))
-            
-            # Combine feedback and code structure
-            embedding_text = combined_feedback + "\n" + code_structure
-            
-            feedback_texts.append(embedding_text)
-            student_ids.append(student_id)
+        # Only process submissions with feedback and valid Java files
+        if data.get("feedback") and data.get("java_files"):
+            try:
+                # Parse the Java files if not already parsed
+                parsed_classes = data.get("parsed_classes", {})
+                if not parsed_classes:
+                    parsed_classes = {}
+                    for file_path, content in data["java_files"].items():
+                        file_parsed_classes = parse_java_code(content)
+                        parsed_classes.update(file_parsed_classes)
+                
+                # Generate improved embedding
+                embedding = get_improved_submission_embedding(data["java_files"], parsed_classes)
+                
+                embeddings.append(embedding)
+                student_ids.append(student_id)
+                print(f"✓ Created embedding for {student_id}")
+            except Exception as e:
+                print(f"⚠️ Error creating embedding for {student_id}: {e}")
     
-    if not feedback_texts:
-        print("⚠️ No valid feedback data available. Skipping FAISS indexing.")
-        return
-    
-    # Generate embeddings
-    embeddings = embedding_model.encode(feedback_texts, normalize_embeddings=True)
-    
-    if embeddings.shape[0] == 0:
+    if not embeddings:
         print("⚠️ No valid embeddings generated. Skipping FAISS indexing.")
         return
     
+    # Convert to numpy array
+    embeddings_array = np.array(embeddings, dtype=np.float32)
+    
     # Create FAISS index
-    dimension = embeddings.shape[1]
+    dimension = embeddings_array.shape[1]
     faiss_index = faiss.IndexFlatL2(dimension)
-    faiss_index.add(np.array(embeddings, dtype=np.float32))
+    faiss_index.add(embeddings_array)
     
     # Save the index and mapping for later retrieval
     faiss.write_index(faiss_index, CONFIG["embeddings_file"])
@@ -443,11 +504,89 @@ def store_feedback_embeddings(processed_data):
     with open(CONFIG["embeddings_file"] + ".json", "w") as f:
         json.dump(student_ids, f)
     
-    print(f"✅ Feedback embeddings stored in {CONFIG['embeddings_file']} for {embeddings.shape[0]} submissions")
+    print(f"✅ Feedback embeddings stored in {CONFIG['embeddings_file']} for {embeddings_array.shape[0]} submissions")
+
+def inspect_faiss_index():
+    """Diagnose issues with the FAISS index and processed data."""
+    # Check if index exists
+    if not os.path.exists(CONFIG["embeddings_file"]):
+        print(f"⚠️ FAISS index file not found at {CONFIG['embeddings_file']}")
+        return False
+    
+    # Load the index
+    try:
+        faiss_index = faiss.read_index(CONFIG["embeddings_file"])
+        print(f"FAISS index info: dimension={faiss_index.d}, total vectors={faiss_index.ntotal}")
+        
+        if faiss_index.ntotal == 0:
+            print("⚠️ FAISS index is empty! You need to add vectors to it.")
+            return False
+        
+        # Load the student ID mapping
+        try:
+            with open(CONFIG["embeddings_file"] + ".json", "r") as f:
+                student_id_mapping = json.load(f)
+            
+            print(f"Student ID mapping contains {len(student_id_mapping)} entries")
+            
+            # Check if mappings align
+            if len(student_id_mapping) != faiss_index.ntotal:
+                print(f"⚠️ Mismatch: mapping has {len(student_id_mapping)} entries but FAISS has {faiss_index.ntotal} vectors")
+                return False
+            
+            # Load processed data
+            try:
+                with open(CONFIG["output_file"], "r") as f:
+                    processed_data = json.load(f)
+                
+                print(f"Processed data contains {len(processed_data)} entries")
+                
+                # Check for feedback
+                feedback_count = 0
+                for student_id in student_id_mapping:
+                    if student_id in processed_data and processed_data[student_id].get("feedback"):
+                        feedback_count += 1
+                
+                print(f"Found feedback for {feedback_count} out of {len(student_id_mapping)} indexed submissions")
+                
+                if feedback_count == 0:
+                    print("⚠️ No feedback found in any indexed submissions!")
+                    return False
+                
+                # Print sample indexed student IDs
+                if student_id_mapping:
+                    print("Sample indexed student IDs:")
+                    for i, student_id in enumerate(student_id_mapping[:5]):
+                        print(f"  {i}: {student_id}")
+                
+                return feedback_count > 0
+                
+            except Exception as e:
+                print(f"⚠️ Error reading processed data: {e}")
+                return False
+                
+        except Exception as e:
+            print(f"⚠️ Error loading student ID mapping: {e}")
+            return False
+            
+    except Exception as e:
+        print(f"⚠️ Error loading FAISS index: {e}")
+        return False
 
 ### --- STEP 5: Main Processing Pipeline --- ###
 def main():
+    # Check existing FAISS index first
+    index_is_valid = inspect_faiss_index() if os.path.exists(CONFIG["embeddings_file"]) else False
+    
+    # Load existing processed data if available
     processed_data = {}
+    if os.path.exists(CONFIG["output_file"]):
+        try:
+            with open(CONFIG["output_file"], "r", encoding="utf-8") as f:
+                processed_data = json.load(f)
+            print(f"Loaded {len(processed_data)} existing submissions from {CONFIG['output_file']}")
+        except Exception as e:
+            print(f"⚠️ Error loading existing data: {e}")
     
     # Process PDF feedback files
     pdf_students = {}
@@ -465,10 +604,15 @@ def main():
                     pdf_students[student_name.lower().replace(" ", "")] = structured_feedback
     
     # Process ZIP submission files
-    submission_count = 0
+    new_or_updated_submissions = 0
     for zip_file in os.listdir(CONFIG["submissions_folder"]):
         if zip_file.endswith(".zip"):
             student_name = extract_name_from_zip(zip_file)
+            
+            # Skip if already processed and not in pdf_students (no new feedback)
+            if student_name in processed_data and student_name not in pdf_students:
+                continue
+            
             zip_path = os.path.join(CONFIG["submissions_folder"], zip_file)
             extracted_java_files = extract_java_files_from_zip(zip_path)
             
@@ -521,18 +665,23 @@ def main():
                 "sentiment": {"label": sentiment_label, "score": sentiment_score}
             }
             
-            submission_count += 1
+            new_or_updated_submissions += 1
             print(f"✓ Processed submission: {student_name}")
     
     # Save processed data
     with open(CONFIG["output_file"], "w", encoding="utf-8") as f:
         json.dump(processed_data, f, indent=4)
     
-    print(f"✅ Processed {submission_count} submissions")
+    print(f"✅ Processed {new_or_updated_submissions} new or updated submissions")
+    print(f"✅ Total data entries: {len(processed_data)}")
     print(f"✅ Data saved to '{CONFIG['output_file']}'")
     
-    # Generate and store embeddings
-    store_feedback_embeddings(processed_data)
+    # Rebuild embeddings if there are new or updated submissions or if index is invalid
+    if new_or_updated_submissions > 0 or not index_is_valid:
+        print("Rebuilding FAISS index with updated data...")
+        store_feedback_embeddings(processed_data)
+    else:
+        print("No new submissions and existing index is valid. Skipping FAISS indexing.")
     
     print(f"✅ Training Phase Complete!")
 

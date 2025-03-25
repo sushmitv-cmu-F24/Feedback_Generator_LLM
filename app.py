@@ -3,8 +3,13 @@ import json
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
-from evaluation_phase import extract_java_files_from_zip, evaluate_submission
+from evaluation_phase import extract_java_files_from_zip, evaluate_submission, inspect_faiss_index
 from feedback_metrics import FeedbackMetrics
+from feedback_evaluation import FeedbackEvaluation
+import atexit
+import sys
+import gc
+import re
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -17,8 +22,9 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs('data', exist_ok=True)
 
-# Initialize feedback metrics
+# Initialize feedback metrics and evaluation
 metrics = FeedbackMetrics()
+evaluator = FeedbackEvaluation()
 
 # Cache for generated feedback
 feedback_cache = {}
@@ -81,6 +87,8 @@ def format_feedback_as_markdown(feedback_text):
     """Format the feedback as proper markdown with headers."""
     # Check if the feedback already has markdown formatting
     if "##" in feedback_text:
+        # Make sure headers and content are properly separated
+        feedback_text = re.sub(r'(## .+?)(\w)', r'\1\n\2', feedback_text)
         return feedback_text
         
     # Otherwise, add markdown formatting
@@ -112,6 +120,11 @@ def format_feedback_as_markdown(feedback_text):
 
 @app.route('/view/<student_id>')
 def view_feedback(student_id):
+    # Add at the beginning of view_feedback in app.py
+    import psutil
+    print(f"Memory usage before processing: {psutil.Process().memory_info().rss / 1024 / 1024:.2f} MB")
+    # Add after processing
+    print(f"Memory usage after processing: {psutil.Process().memory_info().rss / 1024 / 1024:.2f} MB")
     """View generated feedback for a student."""
     # Check if feedback is already in cache
     if student_id in feedback_cache:
@@ -153,6 +166,36 @@ def view_feedback(student_id):
     )
     evaluation_result['quality_metrics'] = quality_metrics
     
+    # Add alignment metrics if reference feedback is available
+    reference_feedback = None
+    if evaluation_result.get('retrieved_feedbacks') and len(evaluation_result['retrieved_feedbacks']) > 0:
+        reference_feedback = evaluation_result['retrieved_feedbacks'][0]
+        
+        # Debug the reference feedback
+        print(f"Reference feedback type: {type(reference_feedback)}")
+        if isinstance(reference_feedback, dict):
+            print(f"Reference feedback keys: {reference_feedback.keys()}")
+            # Check if feedback is nested too deeply
+            for key, value in reference_feedback.items():
+                print(f"Key: {key}, Value type: {type(value)}")
+                if isinstance(value, dict):
+                    print(f"Nested keys: {value.keys()}")
+        else:
+            print(f"Reference feedback length: {len(reference_feedback) if reference_feedback else 0}")
+    
+    # Handle the case where reference_feedback might be a nested dictionary
+    if isinstance(reference_feedback, dict) and 'overall_assessment' in reference_feedback:
+        # This is already properly formatted
+        pass
+    elif isinstance(reference_feedback, dict) and 'feedback' in reference_feedback:
+        # The feedback is nested one level deeper
+        reference_feedback = reference_feedback['feedback']
+    
+    # Calculate feedback evaluation metrics including alignment scores
+    feedback_evaluation = evaluator.evaluate_feedback_quality(feedback_text, reference_feedback)
+    evaluation_result['feedback_evaluation'] = feedback_evaluation
+    evaluation_result['has_reference_feedback'] = (reference_feedback is not None)
+    
     # Format the feedback as markdown with proper headers for nicer display
     formatted_feedback = format_feedback_as_markdown(evaluation_result['generated_feedback'])
     evaluation_result['generated_feedback'] = formatted_feedback
@@ -167,10 +210,57 @@ def view_feedback(student_id):
         java_files=java_files
     )
 
+@app.route('/inspect_index')
+def inspect_index():
+    """Debug page to view FAISS index information."""
+    results = []
+    
+    # Inspect the FAISS index
+    inspect_faiss_index()
+    
+    # Check processed data
+    try:
+        with open(app.config['PROCESSED_DATA'], 'r') as f:
+            processed_data = json.load(f)
+            results.append(f"Processed data contains {len(processed_data)} entries")
+            if len(processed_data) > 0:
+                student_ids = list(processed_data.keys())
+                results.append(f"Sample student IDs: {', '.join(student_ids[:5])}")
+                
+                # Check if any submission has feedback
+                has_feedback = False
+                for student_id, data in processed_data.items():
+                    if data.get('feedback'):
+                        has_feedback = True
+                        results.append(f"Found feedback for {student_id}")
+                        break
+                
+                if not has_feedback:
+                    results.append("⚠️ No feedback found in any processed data entry")
+    except Exception as e:
+        results.append(f"Error reading processed data: {e}")
+    
+    return render_template('debug.html', results=results)
+
 @app.context_processor
 def inject_now():
     """Add the current timestamp to all templates."""
     return {'now': datetime.now()}
+
+# Resource cleanup function
+def cleanup_resources():
+    """Clean up resources when the application exits"""
+    print("Cleaning up resources...")
+    # Clear PyTorch cache
+    if 'torch' in sys.modules:
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    
+    # Force garbage collection
+    gc.collect()
+
+atexit.register(cleanup_resources)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

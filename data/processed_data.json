@@ -26,8 +26,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -361,8 +361,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -546,8 +546,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -882,8 +882,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -1067,8 +1067,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -1117,8 +1117,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -1600,8 +1600,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -1788,8 +1788,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -2127,8 +2127,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -2417,9 +2417,9 @@
                         "name": "senders",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=NotificationSender, sub_type=None))], dimensions=[], name=Map, sub_type=None)",
                         "modifiers": [
-                            "static",
                             "private",
-                            "final"
+                            "final",
+                            "static"
                         ]
                     }
                 ],
@@ -2464,9 +2464,9 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
                             "private",
-                            "final"
+                            "final",
+                            "static"
                         ]
                     }
                 ],
@@ -2653,8 +2653,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -2928,8 +2928,8 @@
                         "name": "sendNotification",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
@@ -2941,8 +2941,8 @@
                         "name": "isPushSupported",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
@@ -2955,9 +2955,9 @@
                         "name": "senders",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=NotificationSender, sub_type=None))], dimensions=[], name=Map, sub_type=None)",
                         "modifiers": [
-                            "static",
                             "private",
-                            "final"
+                            "final",
+                            "static"
                         ]
                     }
                 ],
@@ -3002,8 +3002,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -3187,8 +3187,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -3522,8 +3522,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -3710,8 +3710,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -4051,8 +4051,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -4237,8 +4237,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -4424,8 +4424,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -4729,8 +4729,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -5017,8 +5017,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -5127,8 +5127,8 @@
                         "name": "getSender",
                         "return_type": "ReferenceType(arguments=None, dimensions=[], name=NotificationSender, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
@@ -5242,8 +5242,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -5323,8 +5323,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -5818,8 +5818,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -6150,8 +6150,8 @@
                         "name": "getNotificationSender",
                         "return_type": "ReferenceType(arguments=None, dimensions=[], name=NotificationSender, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
@@ -6230,8 +6230,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -6390,8 +6390,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -6731,8 +6731,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -6919,8 +6919,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -6999,8 +6999,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -7442,8 +7442,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -7811,8 +7811,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -7999,8 +7999,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -8340,8 +8340,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -8528,8 +8528,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -8864,8 +8864,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -9052,8 +9052,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -9240,8 +9240,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -9824,8 +9824,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -9986,8 +9986,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -10093,8 +10093,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -10503,8 +10503,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -10616,8 +10616,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -10697,8 +10697,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -11136,8 +11136,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -11187,8 +11187,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -11655,8 +11655,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -11843,8 +11843,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -12144,8 +12144,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -12332,8 +12332,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -12670,8 +12670,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -12975,8 +12975,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -13193,8 +13193,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -13243,8 +13243,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -13743,8 +13743,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -14064,8 +14064,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -14799,8 +14799,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -15133,8 +15133,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -15318,8 +15318,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -15652,8 +15652,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -15837,8 +15837,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -16158,8 +16158,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -16384,8 +16384,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -16571,8 +16571,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -16726,8 +16726,8 @@
                         "name": "getNotificationSender",
                         "return_type": "ReferenceType(arguments=None, dimensions=[], name=NotificationSender, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
@@ -16926,8 +16926,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -17006,8 +17006,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -17458,8 +17458,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -17833,8 +17833,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -18022,8 +18022,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -18390,8 +18390,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -18576,8 +18576,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -18771,8 +18771,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],
@@ -19100,8 +19100,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "static",
-                            "public"
+                            "public",
+                            "static"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -19429,8 +19429,8 @@
                         "name": "users",
                         "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
                         "modifiers": [
-                            "static",
-                            "private"
+                            "private",
+                            "static"
                         ]
                     }
                 ],

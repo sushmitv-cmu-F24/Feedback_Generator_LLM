@@ -99,3 +99,4 @@ python evaluation_phase.py path/to/submission.zip
 2. Fine tune the model for feedback generation
 3. Add a heading using index.html
 4. Dockerize and deploy the service
+5. Add metrics like BLEU, create list of 4-5 metrics

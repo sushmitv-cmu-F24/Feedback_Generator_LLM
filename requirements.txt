@@ -15,5 +15,12 @@ Werkzeug
 Jinja2
 waitress
 
+# Feedback evaluation dependencies
+rouge-score
+rouge
+transformers
+torch
+scikit-learn
+
 # Spacy language model
 en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.6.0/en_core_web_sm-3.6.0.tar.gz

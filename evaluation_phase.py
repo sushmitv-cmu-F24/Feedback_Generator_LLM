@@ -22,7 +22,11 @@ except FileNotFoundError:
     student_id_mapping = []
 
 # Load the CodeLlama model for generating feedback
-codellama = Client()
+try:
+    codellama = Client()
+except Exception as e:
+    print(f"Error connecting to Ollama: {e}")
+    codellama = None
 
 CONFIG = {
     "evaluation_folder": "./data/evaluation/",
@@ -201,35 +205,109 @@ def preprocess_code_for_llm(java_files):
 
 
 def get_submission_embedding(java_files, parsed_classes):
-    """Generate a normalized embedding for a new submission."""
-    # Combine Java code with parsed structure for a more comprehensive embedding
+    """Generate a normalized embedding for a new submission with improved representation."""
+    # Create a more comprehensive text representation that captures structural elements
+    
+    # 1. Start with basic code text
     java_text = " ".join(java_files.values())
     
-    # Include class structure in the embedding
-    class_info = []
-    for class_name, info in parsed_classes.items():
-        method_names = [m["name"] for m in info.get("methods", [])]
-        field_names = [f["name"] for f in info.get("fields", [])]
-        class_info.append(f"Class: {class_name}, Methods: {', '.join(method_names)}, Fields: {', '.join(field_names)}")
+    # 2. Extract package structure
+    packages = set()
+    for content in java_files.values():
+        package_match = re.search(r'package\s+([\w.]+);', content)
+        if package_match:
+            packages.add(package_match.group(1))
     
-    # Combine text for embedding
-    combined_text = java_text + "\n" + "\n".join(class_info)
+    # 3. Include more detailed class structure
+    class_info = []
+    for file_path, classes in parsed_classes.items():
+        for class_name, info in classes.items():
+            # Add class name and type info
+            class_type = "interface" if info.get("type") == "interface" else "class"
+            class_info.append(f"{class_type} {class_name}")
+            
+            # Add inheritance info
+            if info.get("extends"):
+                class_info.append(f"{class_name} extends {info.get('extends')}")
+            
+            if info.get("implements"):
+                implements = " ".join(info.get("implements", []))
+                class_info.append(f"{class_name} implements {implements}")
+            
+            # Add method signatures (more weight to method names)
+            for method in info.get("methods", []):
+                signature = f"{method.get('name')} {method.get('name')} {method.get('return_type')}"
+                class_info.append(signature)
+    
+    # 4. Add special focus on SOLID-related terms
+    solid_terms = [
+        "responsibility", "single responsibility", "open closed", "liskov", 
+        "interface segregation", "dependency injection", "abstraction",
+        "DatabaseDriver", "PostgresDriver", "UserService", "dependency"
+    ]
+    
+    # Add SOLID terms to the embedding if they appear in the code
+    solid_text = " ".join([term for term in solid_terms if term.lower() in java_text.lower()])
+    
+    # 5. Combine all text elements, giving more weight to important structural elements
+    combined_text = (
+        java_text + " " +
+        " ".join(packages) + " " + " ".join(packages) + " " +  # Double weight for packages
+        " ".join(class_info) + " " +
+        solid_text + " " + solid_text + " " + solid_text  # Triple weight for SOLID terms
+    )
     
     # Generate embedding
+    print(f"Generating embedding from text of length: {len(combined_text)}")
     embedding = embedding_model.encode([combined_text], normalize_embeddings=True)
     return np.array(embedding, dtype=np.float32)
 
 
-def find_closest_past_submissions(embedding, top_k=5, threshold=0.6):
-    """Finds the closest past submissions using FAISS with similarity threshold."""
-    distances, indices = faiss_index.search(embedding, top_k)
+def find_closest_past_submissions(embedding, top_k=10, threshold=0.5):
+    """
+    Finds the closest past submissions using FAISS with improved matching.
+    
+    Args:
+        embedding: The embedding of the current submission
+        top_k: Maximum number of matches to return
+        threshold: Minimum similarity threshold (lowered from 0.6 to 0.5)
+        
+    Returns:
+        List of student IDs for similar past submissions
+    """
+    # Sanity check on FAISS index
+    if faiss_index.ntotal == 0:
+        print("⚠️ FAISS index is empty! No past submissions available for comparison.")
+        return []
+    
+    print(f"Searching for similar submissions among {faiss_index.ntotal} indexed submissions")
+    
+    # Search for similar vectors
+    distances, indices = faiss_index.search(embedding, min(top_k, faiss_index.ntotal))
     
     # Convert L2 distances to similarity scores (0-1 range)
     # For normalized vectors, L2 distance of 2 = completely dissimilar
     max_distance = 2.0
     similarity_scores = [(1.0 - (dist / max_distance)) for dist in distances[0]]
     
-    # Only keep submissions above threshold similarity
+    # Debug: Print all potential matches before threshold filtering
+    all_matches = []
+    for i, similarity in enumerate(similarity_scores):
+        if i < len(indices[0]):
+            idx = indices[0][i]
+            student_id = "unknown"
+            
+            # Try to get student ID from mapping
+            if student_id_mapping and idx < len(student_id_mapping):
+                student_id = student_id_mapping[idx]
+            elif idx < len(list(past_data.keys())):
+                student_id = list(past_data.keys())[idx]
+                
+            all_matches.append((student_id, similarity))
+    
+    print(f"All potential matches (before threshold): {all_matches}")
+    
+    # Filter by threshold
     filtered_matches = []
     for i, similarity in enumerate(similarity_scores):
         if similarity >= threshold and i < len(indices[0]):
@@ -247,8 +325,50 @@ def find_closest_past_submissions(embedding, top_k=5, threshold=0.6):
     # Sort by similarity (highest first)
     filtered_matches.sort(key=lambda x: x[1], reverse=True)
     
-    print(f"Similarity scores for top matches: {filtered_matches}")
+    print(f"Filtered matches (similarity >= {threshold}): {filtered_matches}")
     return [match[0] for match in filtered_matches]
+
+
+# Add this function to manually inspect the FAISS index and past_data
+def inspect_faiss_index():
+    """Diagnose issues with the FAISS index and past_data."""
+    print(f"FAISS index info: dimension={faiss_index.d}, total vectors={faiss_index.ntotal}")
+    
+    if faiss_index.ntotal == 0:
+        print("⚠️ FAISS index is empty! You need to add vectors to it.")
+        return
+    
+    print(f"past_data contains {len(past_data)} entries")
+    
+    if student_id_mapping:
+        print(f"student_id_mapping contains {len(student_id_mapping)} entries")
+        
+        # Check if mappings align
+        if len(student_id_mapping) != faiss_index.ntotal:
+            print(f"⚠️ Mismatch: student_id_mapping has {len(student_id_mapping)} entries but FAISS has {faiss_index.ntotal} vectors")
+    else:
+        print("⚠️ student_id_mapping is empty or not loaded")
+    
+    # Print some sample student IDs
+    if past_data:
+        print("Sample student IDs in past_data:")
+        for i, student_id in enumerate(list(past_data.keys())[:5]):
+            print(f"  {i}: {student_id}")
+    
+    # Check if any student has feedback
+    has_feedback = False
+    for student_id, data in past_data.items():
+        if data.get('feedback'):
+            has_feedback = True
+            print(f"Sample feedback available for {student_id}")
+            if isinstance(data['feedback'], dict):
+                print(f"  Feedback keys: {list(data['feedback'].keys())}")
+            else:
+                print(f"  Feedback type: {type(data['feedback'])}")
+            break
+    
+    if not has_feedback:
+        print("⚠️ No feedback found in any past_data entries!")
 
 
 def detect_package_structure_violations(package_structure, class_packages):
@@ -392,7 +512,7 @@ def extract_solid_violations_from_feedback(feedback_text):
         "OCP": ["open/closed", "new functionality", "modify existing code", "extends without changing", "extension"],
         "LSP": ["liskov", "inheritance", "substitutable", "override", "subclass behavior", "polymorphism"],
         "ISP": ["interface segregation", "unrelated methods", "client-specific", "fat interface", "small interfaces"],
-        "DIP": ["dependency inversion", "abstract", "tight coupling", "concrete implementation", "dependency injection"]
+        "DIP": ["dependency inversion", "dependency injection", "abstract", "tight coupling", "concrete implementation", "high-level", "low-level", "constructor injection", "new operator"]
     }
     
     violations = []
@@ -408,6 +528,10 @@ def extract_solid_violations_from_feedback(feedback_text):
 def generate_codellama_feedback(code_snippet, detected_violations, package_violations, past_feedback):
     """Generates structured feedback using Ollama with CodeLlama."""
     
+    if codellama is None:
+        return "Error: Could not connect to the Ollama service. Please ensure it's running."
+    
+
     # Format detected violations for better prompt clarity
     formatted_violations = []
     confidence_levels = {
@@ -484,74 +608,92 @@ def generate_codellama_feedback(code_snippet, detected_violations, package_viola
     - If there are few or no real issues in the code, acknowledge good design decisions
     """
 
-    response = codellama.generate(model="codellama:13b", prompt=prompt)
-    return response['response'].strip()
+    try:
+        response = codellama.generate(model="codellama:13b", prompt=prompt)
+        return response['response'].strip()
+    except Exception as e:
+        print(f"Error generating feedback with CodeLlama: {e}")
+        return f"Error generating feedback. Please check if the Ollama service is running correctly."
 
 
 def evaluate_submission(java_files):
     """Evaluates a new submission using past feedback and LLM feedback generation."""
-    # Parse all Java files for class structure
-    parsed_classes = {}
-    for file, content in java_files.items():
-        parsed_result = parse_java_code(content)
-        if parsed_result:
-            parsed_classes[file] = parsed_result
-    
-    # Extract package structure
-    package_structure, class_packages = extract_package_structure(java_files)
-    
-    # Analyze code structure to detect SOLID violations
-    detected_violations = detect_solid_violations(parsed_classes, java_files, class_packages)
-    
-    # Detect package structure violations
-    package_violations = detect_package_structure_violations(package_structure, class_packages)
-    
-    # Create embedding and find similar past submissions
-    embedding = get_submission_embedding(java_files, parsed_classes)
-    closest_matches = find_closest_past_submissions(embedding, top_k=3)
-    
-    # Retrieve past feedback for all closest matches
-    past_feedbacks = []
-    for match in closest_matches:
-        if match in past_data and past_data[match]["feedback"]:
-            past_feedbacks.append(past_data[match]["feedback"])
-    
-    # Use the first past feedback as reference if available
-    reference_feedback = past_feedbacks[0] if past_feedbacks else None
-    
-    # Prepare code for LLM analysis
-    processed_code = preprocess_code_for_llm(java_files)
-    
-    # Generate feedback based on code, detected violations, and past feedback
-    structured_feedback = generate_codellama_feedback(
-        processed_code, 
-        detected_violations,
-        package_violations,
-        reference_feedback
-    )
-    
-    # Extract SOLID violations from the generated feedback
-    solid_violations = extract_solid_violations_from_feedback(structured_feedback)
-    
-    # If "good job" or positive feedback is present in the generated text,
-    # and there are no detected violations, don't add violations artificially
-    if "good job" in structured_feedback.lower() or "well done" in structured_feedback.lower():
-        if len(detected_violations) < 2 and len(package_violations) == 0:
-            solid_violations = []
-    
-    return {
-        "closest_matches": closest_matches,
-        "retrieved_feedbacks": past_feedbacks,
-        "generated_feedback": structured_feedback,
-        "parsed_classes": parsed_classes,
-        "detected_violations": detected_violations + package_violations,
-        "solid_violations": solid_violations if solid_violations else ["No SOLID violations detected"]
-    }
-
+    try:
+        # Parse all Java files for class structure
+        parsed_classes = {}
+        for file, content in java_files.items():
+            parsed_result = parse_java_code(content)
+            if parsed_result:
+                parsed_classes[file] = parsed_result
+        
+        # Extract package structure
+        package_structure, class_packages = extract_package_structure(java_files)
+        
+        # Analyze code structure to detect SOLID violations
+        detected_violations = detect_solid_violations(parsed_classes, java_files, class_packages)
+        
+        # Detect package structure violations
+        package_violations = detect_package_structure_violations(package_structure, class_packages)
+        
+        # Create embedding and find similar past submissions
+        embedding = get_submission_embedding(java_files, parsed_classes)
+        closest_matches = find_closest_past_submissions(embedding, top_k=10)
+        
+        # Retrieve past feedback for all closest matches
+        past_feedbacks = []
+        for match in closest_matches:
+            if match in past_data and past_data[match].get("feedback"):
+                past_feedbacks.append(past_data[match]["feedback"])
+        
+        # Use the first past feedback as reference if available
+        reference_feedback = past_feedbacks[0] if past_feedbacks else None
+        
+        # Prepare code for LLM analysis
+        processed_code = preprocess_code_for_llm(java_files)
+        
+        # Generate feedback based on code, detected violations, and past feedback
+        structured_feedback = generate_codellama_feedback(
+            processed_code, 
+            detected_violations,
+            package_violations,
+            reference_feedback
+        )
+        
+        # Extract SOLID violations from the generated feedback
+        solid_violations = extract_solid_violations_from_feedback(structured_feedback)
+        
+        # If "good job" or positive feedback is present in the generated text,
+        # and there are no detected violations, don't add violations artificially
+        if "good job" in structured_feedback.lower() or "well done" in structured_feedback.lower():
+            if len(detected_violations) < 2 and len(package_violations) == 0:
+                solid_violations = []
+        
+        return {
+            "closest_matches": closest_matches,
+            "retrieved_feedbacks": past_feedbacks,
+            "generated_feedback": structured_feedback,
+            "parsed_classes": parsed_classes,
+            "detected_violations": detected_violations + package_violations,
+            "solid_violations": solid_violations if solid_violations else ["No SOLID violations detected"]
+        }
+    except Exception as e:
+        import traceback
+        print(f"ERROR in evaluate_submission: {e}")
+        traceback.print_exc()
+        return {
+            "error": str(e),
+            "generated_feedback": "Error generating feedback. Please try again later.",
+            "closest_matches": [],
+            "detected_violations": [],
+            "solid_violations": []
+        }
 
 # Modify main() function to support both modes
 def main():
     """Run in command-line mode to evaluate all submissions in the folder."""
+    # Add inspection of the FAISS index to diagnose issues
+    inspect_faiss_index()
+    
     evaluation_results = {}
     
     # Check if a specific file is provided as argument
