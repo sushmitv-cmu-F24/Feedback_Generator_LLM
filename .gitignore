@@ -1,5 +1,14 @@
-venv/
+# Python
 __pycache__/
-data/comments/
-data/evaluation/
-data/submissions/
+*.py[cod]
+venv/
+
+# Only ignore temporary files
+.DS_Store
+*.log
+*.tmp
+
+# Do NOT ignore data files - we need these
+# !data/
+# !data/**/
+# !data/**/*
