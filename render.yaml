@@ -2,15 +2,17 @@ services:
   - type: web
     name: automated-assignment-feedback
     env: docker
-    region: oregon  # Choose a region close to your users
-    plan: standard  # This is a paid plan that supports Docker
+    region: oregon
+    plan: standard
     healthCheckPath: /
     disk:
       name: assignment-data
       mountPath: /app/data
-      sizeGB: 10
+      sizeGB: 20  # Increased size to accommodate all data files
     envVars:
       - key: FLASK_ENV
         value: production
       - key: PYTHONUNBUFFERED
         value: "true"
+      - key: GUNICORN_TIMEOUT
+        value: "300"
