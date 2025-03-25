@@ -69,8 +69,14 @@ automated_assignment_feedback/
    ```
    python app.py
    ```
+   For production version, run the following command:
+   ```
+   pip install gunicorn
+   gunicorn -w 1 --timeout 120 app:app
+   ```
 
 2. Open your browser and go to: http://localhost:5000
+   For Production version, use link generated on running gunicorn.
 
 3. Upload new submissions through the interface and generate feedback
 
