@@ -1,4 +1,5 @@
 import os
+import gc
 import sys
 import re
 import json
@@ -7,6 +8,7 @@ import faiss
 import numpy as np
 import javalang
 import time
+import torch
 from sentence_transformers import SentenceTransformer
 from ollama import Client
 
@@ -648,7 +650,11 @@ def generate_codellama_feedback(code_snippet, detected_violations, package_viola
         print(f"Attempting to generate feedback with model: codellama:7b")
         response = codellama.generate(model="codellama:7b", prompt=prompt)
         print(f"Successfully generated feedback")
-        return response['response'].strip()
+        feedback_text = response['response'].strip()
+        del response
+        gc.collect()
+        return feedback_text
+        #return response['response'].strip()
     except Exception as e:
         print(f"Error generating feedback with CodeLlama: {e}")
         import traceback
@@ -708,6 +714,14 @@ def evaluate_submission(java_files):
         if "good job" in structured_feedback.lower() or "well done" in structured_feedback.lower():
             if len(detected_violations) < 2 and len(package_violations) == 0:
                 solid_violations = []
+        
+        try:
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except ImportError:
+            pass
+
+        gc.collect()
         
         return {
             "closest_matches": closest_matches,

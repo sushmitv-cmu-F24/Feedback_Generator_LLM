@@ -2,6 +2,8 @@
 
 set -e  # Stop script on first error
 
+export OLLAMA_NOPRUNE=false
+
 # Start Ollama in background
 ollama serve &
 OLLAMA_PID=$!
@@ -14,4 +16,4 @@ ollama pull codellama:7b
 
 echo "🚀 Starting Flask app with Gunicorn..."
 # Start gunicorn in foreground so Render can track it
-exec gunicorn --bind 0.0.0.0:$PORT --timeout 600 app:app
+exec gunicorn --bind 0.0.0.0:$PORT --timeout 600 --log-level debug app:app

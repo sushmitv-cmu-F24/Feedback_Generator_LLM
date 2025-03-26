@@ -18,7 +18,7 @@ services:
         value: "true"
       - key: GUNICORN_TIMEOUT
         value: "600"
+      - key: PORT
+        value: "10000" 
       - key: OLLAMA_HOST
         value: http://ollama:11434
-      - key: FLASK_SECRET_KEY
-        generateValue: true  # Recommended for session security
