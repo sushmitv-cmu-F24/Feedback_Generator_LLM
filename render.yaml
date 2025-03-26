@@ -5,6 +5,8 @@ services:
     region: oregon
     plan: standard
     healthCheckPath: /
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     disk:
       name: assignment-data
       mountPath: /app/data
@@ -15,4 +17,8 @@ services:
       - key: PYTHONUNBUFFERED
         value: "true"
       - key: GUNICORN_TIMEOUT
-        value: "300"
+        value: "600"
+      - key: OLLAMA_HOST
+        value: http://ollama:11434
+      - key: FLASK_SECRET_KEY
+        generateValue: true  # Recommended for session security

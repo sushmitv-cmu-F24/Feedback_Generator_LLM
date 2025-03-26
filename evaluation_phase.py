@@ -6,33 +6,21 @@ import zipfile
 import faiss
 import numpy as np
 import javalang
-from ollama import Client
+import time
 from sentence_transformers import SentenceTransformer
+from ollama import Client
 
-# Load the FAISS index and model
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-faiss_index = faiss.read_index("./data/feedback_embeddings.faiss")
-
-# Load the student ID mapping for FAISS index
-try:
-    with open("./data/feedback_embeddings.faiss.json", "r") as f:
-        student_id_mapping = json.load(f)
-except FileNotFoundError:
-    print("⚠️ Student ID mapping file not found. Will use index positions as fallback.")
-    student_id_mapping = []
-
-# Load the CodeLlama model for generating feedback
-try:
-    codellama = Client()
-except Exception as e:
-    print(f"Error connecting to Ollama: {e}")
-    codellama = None
+# Lazy-loaded globals
+embedding_model = None
+faiss_index = None
+codellama = None
+student_id_mapping = []
+past_data = {}
 
 CONFIG = {
     "evaluation_folder": "./data/evaluation/",
     "output_file": "./data/evaluation_results.json",
     "processed_data_file": "./data/processed_data.json",
-    # Assignment-specific requirements
     "assignment_requirements": {
         "package_structure": {
             "required_packages": ["solid.persistence.drivers"],
@@ -51,21 +39,68 @@ CONFIG = {
         },
         "solid_principles": {
             "srp": {
-                "max_methods": 7,  # Threshold for SRP violation (adjusted based on professor feedback)
-                "max_concerns": 2   # Max number of different concerns in a class
+                "max_methods": 7,
+                "max_concerns": 2
             }
         }
     }
 }
 
-# Load past processed data
-try:
-    with open(CONFIG["processed_data_file"], "r") as f:
-        past_data = json.load(f)
-except FileNotFoundError:
-    print("⚠️ Past data file not found. Creating new data structure.")
-    past_data = {}
+def initialize_resources():
+    global embedding_model, faiss_index, codellama, student_id_mapping, past_data
 
+    if embedding_model is None:
+        print("\u23F3 Loading embedding model...")
+        embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+
+    if faiss_index is None:
+        try:
+            print("\u23F3 Loading FAISS index...")
+            faiss_index = faiss.read_index("./data/feedback_embeddings.faiss")
+        except Exception as e:
+            print(f"⚠️ Failed to load FAISS index: {e}")
+            faiss_index = faiss.IndexFlatL2(384)
+
+    if not student_id_mapping:
+        try:
+            with open("./data/feedback_embeddings.faiss.json", "r") as f:
+                student_id_mapping = json.load(f)
+        except FileNotFoundError:
+            print("⚠️ Student ID mapping file not found.")
+            student_id_mapping = []
+
+    if not past_data:
+        try:
+            with open(CONFIG["processed_data_file"], "r") as f:
+                past_data = json.load(f)
+        except FileNotFoundError:
+            print("⚠️ Past data file not found. Creating new data structure.")
+            past_data = {}
+
+    if codellama is None:
+        print("\u23F3 Connecting to Ollama...")
+        codellama = connect_to_ollama()
+
+def connect_to_ollama(retries=5, delay=5):
+    """Establish connection to Ollama with retries."""
+    ollama_host = os.environ.get('OLLAMA_HOST', 'http://ollama:11434')
+    print(f"Attempting to connect to Ollama at {ollama_host}")
+    
+    for attempt in range(retries):
+        try:
+            client = Client(host=ollama_host)
+            # Test the connection
+            models = client.list()
+            print(f"Successfully connected to Ollama. Available models: {models}")
+            return client
+        except Exception as e:
+            print(f"Attempt {attempt+1}/{retries} failed: {e}")
+            if attempt < retries - 1:
+                print(f"Retrying in {delay} seconds...")
+                time.sleep(delay)
+    
+    print("Failed to connect to Ollama after multiple attempts")
+    return None
 
 def extract_java_files_from_zip(zip_path):
     """Extract Java files from a ZIP submission and clean content."""
@@ -332,6 +367,7 @@ def find_closest_past_submissions(embedding, top_k=10, threshold=0.5):
 # Add this function to manually inspect the FAISS index and past_data
 def inspect_faiss_index():
     """Diagnose issues with the FAISS index and past_data."""
+    initialize_resources()
     print(f"FAISS index info: dimension={faiss_index.d}, total vectors={faiss_index.ntotal}")
     
     if faiss_index.ntotal == 0:
@@ -609,15 +645,20 @@ def generate_codellama_feedback(code_snippet, detected_violations, package_viola
     """
 
     try:
-        response = codellama.generate(model="codellama:13b", prompt=prompt)
+        print(f"Attempting to generate feedback with model: codellama:7b")
+        response = codellama.generate(model="codellama:7b", prompt=prompt)
+        print(f"Successfully generated feedback")
         return response['response'].strip()
     except Exception as e:
         print(f"Error generating feedback with CodeLlama: {e}")
-        return f"Error generating feedback. Please check if the Ollama service is running correctly."
+        import traceback
+        traceback.print_exc()  # This will print the full stack trace
+        return f"Error generating feedback. Please check if the Ollama service is running correctly. Error: {str(e)}"
 
 
 def evaluate_submission(java_files):
     """Evaluates a new submission using past feedback and LLM feedback generation."""
+    initialize_resources()
     try:
         # Parse all Java files for class structure
         parsed_classes = {}
@@ -691,6 +732,7 @@ def evaluate_submission(java_files):
 # Modify main() function to support both modes
 def main():
     """Run in command-line mode to evaluate all submissions in the folder."""
+    initialize_resources()
     # Add inspection of the FAISS index to diagnose issues
     inspect_faiss_index()
     
