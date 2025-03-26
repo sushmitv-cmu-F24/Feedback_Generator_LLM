@@ -1,16 +1,17 @@
 #!/bin/sh
 
+set -e  # Stop script on first error
+
 # Start Ollama in background
 ollama serve &
 OLLAMA_PID=$!
 
 echo "🦙 Waiting for Ollama to start..."
-sleep 15
+sleep 10
 
 echo "📦 Pulling CodeLlama 7B model..."
 ollama pull codellama:7b
 
 echo "🚀 Starting Flask app with Gunicorn..."
-gunicorn --bind 0.0.0.0:$PORT --timeout 600 app:app &
-
-wait $OLLAMA_PID
+# Start gunicorn in foreground so Render can track it
+exec gunicorn --bind 0.0.0.0:$PORT --timeout 600 app:app
