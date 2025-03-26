@@ -1,14 +1,16 @@
-#!/bin/bash
+#!/bin/sh
+
+# Start Ollama in background
 ollama serve &
 OLLAMA_PID=$!
 
-# Wait for Ollama to start
-echo "Waiting for Ollama to start..."
+echo "🦙 Waiting for Ollama to start..."
 sleep 15
 
-# Always pull codellama:7b
-echo "Pulling CodeLlama 7B model..."
+echo "📦 Pulling CodeLlama 7B model..."
 ollama pull codellama:7b
 
-# Keep the container running
+echo "🚀 Starting Flask app with Gunicorn..."
+exec gunicorn --bind 0.0.0.0:$PORT --timeout 600 app:app
+
 wait $OLLAMA_PID
