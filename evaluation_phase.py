@@ -263,7 +263,7 @@ def get_submission_embedding(java_files, parsed_classes):
     return np.array(embedding, dtype=np.float32)
 
 
-def find_closest_past_submissions(embedding, top_k=10, threshold=0.5):
+def find_closest_past_submissions(embedding, top_k=10, threshold=0.8):
     """
     Finds the closest past submissions using FAISS with improved matching.
     
@@ -524,88 +524,97 @@ def extract_solid_violations_from_feedback(feedback_text):
     
     return list(set(violations))  # Remove duplicates
 
-
 def generate_codellama_feedback(code_snippet, detected_violations, package_violations, past_feedback):
-    """Generates structured feedback using Ollama with CodeLlama."""
+    """Generates structured feedback using Ollama with CodeLlama with improved prompting."""
     
     if codellama is None:
         return "Error: Could not connect to the Ollama service. Please ensure it's running."
     
-
     # Format detected violations for better prompt clarity
     formatted_violations = []
-    confidence_levels = {
-        "SRP": "high" if any(v["principle"] == "SRP" for v in detected_violations) else "low",
-        "OCP": "medium",
-        "LSP": "low",
-        "ISP": "medium" if any(v["principle"] == "ISP" for v in detected_violations) else "low",
-        "DIP": "high" if any(v["principle"] == "DIP" for v in detected_violations) else "medium",
-    }
-    
     for violation in detected_violations:
-        formatted_violations.append(f"- {violation['principle']}: {violation['location']} - {violation['description']} (confidence: {confidence_levels[violation['principle']]})")
+        formatted_violations.append(f"- {violation['principle']}: {violation['location']} - {violation['description']}")
     
-    # Format package violations
     for violation in package_violations:
-        formatted_violations.append(f"- Package Structure: {violation['location']} - {violation['description']} (confidence: high)")
+        formatted_violations.append(f"- Package Structure: {violation['location']} - {violation['description']}")
     
-    # Convert past feedback to a more useful format
-    past_feedback_sections = []
+    # Convert past feedback to a useful format
+    past_feedback_text = ""
     if past_feedback:
-        for key, value in past_feedback.items():
-            if value:
-                past_feedback_sections.append(f"## {key.replace('_', ' ').title()}\n{value}")
-    
-    past_feedback_text = "\n\n".join(past_feedback_sections) if past_feedback_sections else "No specific feedback available from similar submissions."
-    
-    # Create a structured prompt with specific SOLID principle explanations
+        if isinstance(past_feedback, dict):
+            for key, value in past_feedback.items():
+                if value and isinstance(value, str):
+                    past_feedback_text += f"{key}: {value}\n\n"
+        elif isinstance(past_feedback, str):
+            past_feedback_text = past_feedback
+
+    # Build enhanced prompt
     prompt = f"""
-    You are an expert Java instructor evaluating code submissions for an assignment on SOLID principles.
+    You are an expert Java instructor evaluating code submissions for a SOLID principles refactoring assignment.
     
-    Your task is to provide detailed, constructive feedback on how well the code adheres to the SOLID principles:
-    1. Single Responsibility Principle (SRP): A class should have only one reason to change
-    2. Open/Closed Principle (OCP): Software entities should be open for extension but closed for modification 
-    3. Liskov Substitution Principle (LSP): Objects of a superclass should be replaceable with objects of subclasses without breaking the application
-    4. Interface Segregation Principle (ISP): Many client-specific interfaces are better than one general-purpose interface
-    5. Dependency Inversion Principle (DIP): High-level modules should not depend on low-level modules; both should depend on abstractions
-    
-    Assignment-specific requirements:
-    - The DatabaseDriver interface should be in the solid.persistence package
-    - The PostgresDriver implementation should be in the solid.persistence.drivers package 
-    - UserService should use dependency injection (constructor injection) for DatabaseDriver
-    - Classes should follow SRP with focused responsibilities
-    
+    The student was required to complete EXACTLY these 5 refactoring steps in order:
+
+    STEP 1 (SRP Preparation): 
+    - Split UserOperations into two interfaces: UserOperations and NotificationOperations
+    - Extract interface from the existing UserOperations interface
+
+    STEP 2 (SRP Implementation):
+    - Split RegularUserService into two distinct services
+    - Create a NotificationService class with notification methods
+    - Remove UserOperations extension to NotificationOperations
+    - Ensure NotificationService extends NotificationOperations
+
+    STEP 3 (ISP & OCP):
+    - Split NotificationOperations into different notification mechanisms
+    - Implement Strategy Pattern with NotificationSender interface
+    - Create separate classes for each notification type
+    - Remove NotificationOperations interface
+    - Use a Factory for handling notifications
+
+    STEP 4 (LSP):
+    - Fix AdminUser's deleteAccount method that violates LSP
+    - Ensure consistent behavior between User and AdminUser classes
+
+    STEP 5 (DIP):
+    - Create DatabaseDriver interface in solid.persistence package
+    - Implement PostgresDriver by extending the interface
+    - Move PostgresDriver to solid.persistence.drivers subpackage
+    - Modify UserService to use dependency injection with DatabaseDriver
+
     Code to analyze:
     ```java
     {code_snippet}
     ```
-    
-    Detected violations (with confidence levels):
+
+    Detected violations (focus especially on these):
     {chr(10).join(formatted_violations)}
-    
+
     Previous instructor feedback for similar submissions:
     {past_feedback_text}
-    
-    Based on your analysis and the detected violations, provide the following:
-    
+
+    CRITICAL GUIDELINES FOR YOUR FEEDBACK:
+    1. Focus on specificity - refer to actual classes, methods, and code elements from the student's submission
+    2. For each STEP, clearly state if it is: Fully implemented, Partially implemented, or Not implemented
+    3. For DIP violations, specifically check:
+       - If UserService has a constructor that accepts DatabaseDriver
+       - If PostgresDriver is in the correct subpackage
+       - If direct instantiation of PostgresDriver is removed
+    4. For LSP violations, specifically verify if AdminUser.deleteAccount changes expected behavior
+    5. For each violation, provide a concrete suggestion on how to fix it
+
+    Format your response exactly as follows:
+
     ## Overall Assessment
-    [Provide a brief assessment of the code's adherence to SOLID principles. Be accurate but focus on major issues.]
-    
+    [Brief assessment of implementation quality focusing only on the 5 refactoring steps]
+
+    ## Refactoring Steps Implementation
+    [For EACH of the 5 steps, indicate completion status with specific evidence]
+
     ## SOLID Violations
-    [List specific SOLID violations, focusing on those with high confidence. For each violation, include:
-    1. The principle being violated
-    2. The specific location (class/method)
-    3. A clear explanation of the issue
-    4. A specific suggestion to fix it]
-    
+    [List only violations directly related to the 5 refactoring steps with concrete examples]
+
     ## Improvement Suggestions
-    [Provide 2-3 concrete suggestions to improve the code's adherence to SOLID principles]
-    
-    Important: 
-    - Focus on the most important issues rather than listing every minor problem
-    - Reference the specific instructor feedback patterns from previous submissions
-    - Be constructive and educational in your feedback
-    - If there are few or no real issues in the code, acknowledge good design decisions
+    [Provide specific, actionable code changes to implement the missing parts]
     """
 
     try:
