@@ -1,0 +1,84 @@
+/* Review Feedback Specific Styles */
+
+/* Rating slider styling */
+.rating-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-range::-webkit-slider-thumb {
+    background: #0d6efd;
+}
+
+.form-range::-moz-range-thumb {
+    background: #0d6efd;
+}
+
+/* Rating badge colors */
+.rating-badge-high {
+    background-color: #28a745;
+}
+
+.rating-badge-medium {
+    background-color: #0d6efd;
+}
+
+.rating-badge-low {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.rating-badge-poor {
+    background-color: #dc3545;
+}
+
+/* Split view layout */
+.code-view-container {
+    height: 500px;
+    overflow-y: auto;
+}
+
+.feedback-view-container {
+    min-height: 300px;
+}
+
+/* Feedback editor */
+.feedback-editor {
+    font-family: monospace;
+    min-height: 400px;
+    line-height: 1.5;
+}
+
+/* Issues checklist */
+.issues-checklist {
+    margin-bottom: 1rem;
+}
+
+.issue-item {
+    margin-bottom: 0.5rem;
+}
+
+/* Category ratings */
+.category-ratings {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.category-rating-item {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Metrics chart radar styling */
+.metrics-chart-container {
+    height: 250px;
+}
+
+/* Additional comments box */
+.additional-comments {
+    font-size: 0.9rem;
+    background-color: #f8f9fa;
+}

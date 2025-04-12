@@ -74,6 +74,10 @@ automated_assignment_feedback/
    pip install gunicorn
    gunicorn -w 1 --timeout 120 app:app
    ```
+   For running NGROK:
+   ```
+   ngrok http 8000
+   ```
 
 2. Open your browser and go to: http://localhost:5000
    For Production version, use link generated on running gunicorn.
@@ -94,7 +98,7 @@ python evaluation_phase.py path/to/submission.zip
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.10.16
 - PyPDF2, spaCy, NLTK, FAISS, sentence-transformers
 - Flask for web interface
 - Ollama for LLM inference

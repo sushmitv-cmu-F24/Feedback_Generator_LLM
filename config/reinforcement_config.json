@@ -1,0 +1,24 @@
+{
+    "feedback_data_dir": "./data/feedback_reinforcement/",
+    "feedback_store_file": "./data/feedback_reinforcement/feedback_store.json",
+    "fine_tuning_dir": "./data/fine_tuning/",
+    "ollama_model": "codellama:13b",
+    "min_samples_for_fine_tuning": 5,
+    "learning_rate": 5e-5,
+    "epochs": 3,
+    "batch_size": 4,
+    "training_settings": {
+        "use_peft": true,
+        "lora_r": 16,
+        "lora_alpha": 32,
+        "lora_dropout": 0.05,
+        "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"]
+    },
+    "evaluation_metrics": [
+        "accuracy",
+        "specificity",
+        "actionability",
+        "completeness",
+        "instructor_alignment"
+    ]
+}

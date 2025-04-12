@@ -6,7 +6,12 @@
 </head>
 <body>
     <div class="container mt-4">
-        <h1>Student Submissions</h1>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Student Submissions</h1>
+            <a href="{{ url_for('reinforcement_dashboard') }}" class="btn btn-success">
+                <i class="bi bi-graph-up"></i> RL Dashboard
+            </a>
+        </div>
         
         <div class="card mb-4">
             <div class="card-header">Upload New Submission</div>
@@ -40,15 +45,20 @@
                                 <td>{{ submission.student_id }}</td>
                                 <td>{{ submission.date }}</td>
                                 <td>
-                                    {% if submission.has_feedback %}
-                                    <a href="{{ url_for('view_feedback', student_id=submission.student_id) }}" class="btn btn-primary btn-sm">
-                                        View Feedback
-                                    </a>
-                                    {% else %}
-                                    <a href="{{ url_for('generate_feedback', student_id=submission.student_id) }}" class="btn btn-outline-primary btn-sm">
-                                        Generate Feedback
-                                    </a>
-                                    {% endif %}
+                                    <div class="btn-group" role="group">
+                                        {% if submission.has_feedback %}
+                                        <a href="{{ url_for('view_feedback', student_id=submission.student_id) }}" class="btn btn-primary btn-sm">
+                                            View Feedback
+                                        </a>
+                                        <a href="{{ url_for('review_feedback', student_id=submission.student_id) }}" class="btn btn-success btn-sm">
+                                            Review (RL)
+                                        </a>
+                                        {% else %}
+                                        <a href="{{ url_for('generate_feedback', student_id=submission.student_id) }}" class="btn btn-outline-primary btn-sm">
+                                            Generate Feedback
+                                        </a>
+                                        {% endif %}
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -58,6 +68,42 @@
                 {% else %}
                 <p class="text-center">No submissions found. Upload a ZIP file to get started.</p>
                 {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Reinforcement Learning System</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-7">
+                        <h6>How the Reinforcement Learning Works:</h6>
+                        <ol>
+                            <li>Upload student submissions and generate automatic feedback</li>
+                            <li>Click "Review (RL)" to evaluate and improve the generated feedback</li>
+                            <li>The system collects your improvements as training data</li>
+                            <li>Once enough data is collected, the model can be fine-tuned</li>
+                            <li>The feedback quality improves over time as the model learns from your corrections</li>
+                        </ol>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6>Benefits:</h6>
+                                <ul>
+                                    <li>Continuous improvement in feedback quality</li>
+                                    <li>Model learns your specific feedback preferences</li>
+                                    <li>Reduces manual editing over time</li>
+                                    <li>Adapts to different assignment types</li>
+                                </ul>
+                                <a href="{{ url_for('reinforcement_dashboard') }}" class="btn btn-outline-success btn-sm w-100 mt-2">
+                                    View RL Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
