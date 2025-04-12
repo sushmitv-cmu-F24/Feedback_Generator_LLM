@@ -6,8 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from werkzeug.utils import secure_filename
 from evaluation_phase import extract_java_files_from_zip, evaluate_submission, inspect_faiss_index
 from feedback_metrics import FeedbackMetrics
-from feedback_evaluation import FeedbackEvaluation
-from feedback_reinforcement import FeedbackReinforcementLearning
+from reinforcement import FeedbackReinforcementLearning
 import atexit
 import sys
 import gc
@@ -17,6 +16,8 @@ matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 from io import BytesIO
 import numpy as np
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -33,18 +34,55 @@ os.makedirs('static/css', exist_ok=True)
 os.makedirs('static/js', exist_ok=True)
 os.makedirs('config', exist_ok=True)
 
-# Initialize feedback metrics, evaluation, and reinforcement learning
+# Initialize feedback metrics and reinforcement learning
 metrics = FeedbackMetrics()
-evaluator = FeedbackEvaluation()
 reinforcement = FeedbackReinforcementLearning(config_file=app.config['RL_CONFIG'])
 
 # Cache for generated feedback
 feedback_cache = {}
 
+# Storage for submissions data
+submissions = {}
+
+def load_submissions():
+    """Load saved submissions data from disk."""
+    global submissions
+    submissions_file = os.path.join('data', 'submissions_data.json')
+    
+    if os.path.exists(submissions_file):
+        try:
+            with open(submissions_file, 'r') as f:
+                submissions = json.load(f)
+            print(f"Loaded {len(submissions)} submissions from disk")
+        except Exception as e:
+            print(f"Error loading submissions data: {e}")
+            submissions = {}
+    else:
+        submissions = {}
+    
+    # Initialize from feedback cache for any missing entries
+    for student_id, data in feedback_cache.items():
+        if student_id not in submissions:
+            submissions[student_id] = data
+
+def save_submissions():
+    """Save submissions data to disk."""
+    submissions_file = os.path.join('data', 'submissions_data.json')
+    
+    try:
+        with open(submissions_file, 'w') as f:
+            json.dump(submissions, f, indent=4)
+        print(f"Saved {len(submissions)} submissions to disk")
+    except Exception as e:
+        print(f"Error saving submissions data: {e}")
+
+# Load submissions data on startup
+load_submissions()
+
 @app.route('/')
 def index():
     """Home page with upload form and list of submissions."""
-    submissions = []
+    submissions_list = []
     
     # Get list of uploaded submissions
     for filename in os.listdir(app.config['UPLOAD_FOLDER']):
@@ -54,9 +92,9 @@ def index():
             submission_date = datetime.fromtimestamp(submission_time).strftime('%Y-%m-%d %H:%M')
             
             # Check if feedback has been generated
-            has_feedback = student_id in feedback_cache
+            has_feedback = student_id in feedback_cache or student_id in submissions
             
-            submissions.append({
+            submissions_list.append({
                 'student_id': student_id,
                 'filename': filename,
                 'date': submission_date,
@@ -64,9 +102,9 @@ def index():
             })
     
     # Sort submissions by date (newest first)
-    submissions.sort(key=lambda x: x['date'], reverse=True)
+    submissions_list.sort(key=lambda x: x['date'], reverse=True)
     
-    return render_template('index.html', submissions=submissions)
+    return render_template('index.html', submissions=submissions_list)
 
 @app.route('/upload', methods=['POST'])
 def upload_submission():
@@ -139,13 +177,20 @@ def view_feedback(student_id):
     except ImportError:
         print("psutil not installed, skipping memory usage monitoring")
     
-    # Check if feedback is already in cache
+    # Check if feedback is already in cache or submissions
     if student_id in feedback_cache:
         return render_template(
             'view_feedback.html',
             student_id=student_id,
             feedback=feedback_cache[student_id],
             java_files=feedback_cache[student_id].get('java_files', {})
+        )
+    elif student_id in submissions:
+        return render_template(
+            'view_feedback.html',
+            student_id=student_id,
+            feedback=submissions[student_id],
+            java_files=submissions[student_id].get('java_files', {})
         )
     
     # Find the ZIP file for this student
@@ -179,42 +224,16 @@ def view_feedback(student_id):
     )
     evaluation_result['quality_metrics'] = quality_metrics
     
-    # Add alignment metrics if reference feedback is available
-    reference_feedback = None
-    if evaluation_result.get('retrieved_feedbacks') and len(evaluation_result['retrieved_feedbacks']) > 0:
-        reference_feedback = evaluation_result['retrieved_feedbacks'][0]
-        
-        # Debug the reference feedback
-        print(f"Reference feedback type: {type(reference_feedback)}")
-        if isinstance(reference_feedback, dict):
-            print(f"Reference feedback keys: {reference_feedback.keys()}")
-            # Check if feedback is nested too deeply
-            for key, value in reference_feedback.items():
-                print(f"Key: {key}, Value type: {type(value)}")
-                if isinstance(value, dict):
-                    print(f"Nested keys: {value.keys()}")
-        else:
-            print(f"Reference feedback length: {len(reference_feedback) if reference_feedback else 0}")
-    
-    # Handle the case where reference_feedback might be a nested dictionary
-    if isinstance(reference_feedback, dict) and 'overall_assessment' in reference_feedback:
-        # This is already properly formatted
-        pass
-    elif isinstance(reference_feedback, dict) and 'feedback' in reference_feedback:
-        # The feedback is nested one level deeper
-        reference_feedback = reference_feedback['feedback']
-    
-    # Calculate feedback evaluation metrics including alignment scores
-    feedback_evaluation = evaluator.evaluate_feedback_quality(feedback_text, reference_feedback)
-    evaluation_result['feedback_evaluation'] = feedback_evaluation
-    evaluation_result['has_reference_feedback'] = (reference_feedback is not None)
-    
     # Format the feedback as markdown with proper headers for nicer display
     formatted_feedback = format_feedback_as_markdown(evaluation_result['generated_feedback'])
     evaluation_result['generated_feedback'] = formatted_feedback
     
-    # Store in cache
+    # Store in cache and submissions
     feedback_cache[student_id] = evaluation_result
+    submissions[student_id] = evaluation_result
+    
+    # Save the updated submissions
+    save_submissions()
     
     try:
         import psutil
@@ -231,9 +250,9 @@ def view_feedback(student_id):
 
 @app.route('/review/<student_id>')
 def review_feedback(student_id):
-    """Show review interface for instructor to provide feedback on model output."""
-    # Check if feedback is in cache
-    if student_id not in feedback_cache:
+    """Show simplified review interface for instructor to provide feedback on model output."""
+    # Check if feedback is in cache or submissions
+    if student_id not in feedback_cache and student_id not in submissions:
         # Find the ZIP file
         zip_file = None
         for filename in os.listdir(app.config['UPLOAD_FOLDER']):
@@ -257,168 +276,197 @@ def review_feedback(student_id):
         evaluation_result = evaluate_submission(java_files)
         evaluation_result['java_files'] = java_files
         feedback_cache[student_id] = evaluation_result
+        submissions[student_id] = evaluation_result
+        save_submissions()
     else:
         # Use cached feedback
-        evaluation_result = feedback_cache[student_id]
+        evaluation_result = feedback_cache[student_id] if student_id in feedback_cache else submissions[student_id]
         java_files = evaluation_result.get('java_files', {})
     
-    # Extract model-generated feedback and metrics
+    # Extract model-generated feedback 
     model_feedback = evaluation_result.get('generated_feedback', '')
-    metrics_data = evaluation_result.get('quality_metrics', {})
     
-    # Render review template
+    # Render simplified review template
     return render_template(
         'review_feedback.html',
         student_id=student_id,
         model_feedback=model_feedback,
-        java_files=java_files,
-        metrics=metrics_data
+        java_files=java_files
     )
 
 @app.route('/submit_feedback_review/<student_id>', methods=['POST'])
 def submit_feedback_review(student_id):
-    """Process instructor feedback for reinforcement learning."""
-    # Extract form data
-    rating = float(request.form.get('rating', 0)) / 100.0  # Convert to 0-1 scale
-    corrected_feedback = request.form.get('corrected_feedback', '')
-    additional_comments = request.form.get('additional_comments', '')
-    issues = request.form.getlist('issues')
-    
-    # Extract detailed ratings
-    accuracy_rating = int(request.form.get('accuracy_rating', 3))
-    specificity_rating = int(request.form.get('specificity_rating', 3))
-    actionability_rating = int(request.form.get('actionability_rating', 3))
-    completeness_rating = int(request.form.get('completeness_rating', 3))
-    
-    # Get the original submission and feedback
-    if student_id not in feedback_cache:
-        flash('Submission not found in cache. Please try again.')
+    """Simplified handler for instructor feedback submission."""
+    if student_id not in submissions:
+        flash(f"Student submission {student_id} not found.", "danger")
         return redirect(url_for('index'))
     
-    evaluation_result = feedback_cache[student_id]
+    # Get form data - simplified to just the essentials
+    rating = int(request.form.get('rating', 0)) / 100.0  # Convert 0-100 to 0-1 scale
+    corrected_feedback = request.form.get('corrected_feedback', '')
     
-    # Prepare data for reinforcement learning
-    original_code = ""
-    for file_content in evaluation_result.get('java_files', {}).values():
-        original_code += file_content + "\n\n"
+    # Get the submission data
+    submission = submissions[student_id]
     
-    model_feedback = evaluation_result.get('generated_feedback', '')
+    # Save the feedback to the submission
+    submission['instructor_feedback'] = corrected_feedback
+    submission['instructor_rating'] = rating
     
-    # Create metadata for training
-    feedback_meta = {
-        'accuracy_rating': accuracy_rating,
-        'specificity_rating': specificity_rating,
-        'actionability_rating': actionability_rating,
-        'completeness_rating': completeness_rating,
-        'issues': issues,
-        'additional_comments': additional_comments
-    }
+    # Store feedback for reinforcement learning
+    try:
+        # Get the original code and model feedback
+        original_code = ""
+        for file_content in submission.get('java_files', {}).values():
+            original_code += file_content + "\n\n"
+            
+        model_feedback = submission.get('generated_feedback', '')
+        
+        # Initialize RL module and store the feedback pair
+        rl = FeedbackReinforcementLearning()
+        rl.store_feedback_pair(
+            submission_id=student_id,
+            original_code=original_code,
+            model_feedback=model_feedback,
+            instructor_feedback=corrected_feedback,
+            instructor_rating=rating
+        )
+        
+        # Check if we have enough samples for improvement
+        stats = rl.get_learning_stats()
+        if stats['status'] == 'success':
+            if stats['samples_needed_for_improvement'] <= 0:
+                flash("Enough feedback collected! Future feedback will be improved based on your input.", "success")
+            else:
+                flash(f"Feedback stored. Need {stats['samples_needed_for_improvement']} more examples for improvement.", "info")
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        flash(f"Error storing feedback: {str(e)}", "warning")
     
-    # Store the feedback pair for reinforcement learning
-    reinforcement.store_feedback_pair(
-        submission_id=student_id,
-        original_code=original_code,
-        model_feedback=model_feedback,
-        instructor_feedback=corrected_feedback,
-        instructor_rating=rating,
-        feedback_meta=feedback_meta
-    )
+    # Save all submissions
+    save_submissions()
     
-    # Flash success message
-    flash('Feedback successfully submitted for reinforcement learning. Thank you!')
-    
-    # Redirect to dashboard
-    return redirect(url_for('reinforcement_dashboard'))
+    flash("Feedback review submitted successfully!", "success")
+    return redirect(url_for('index'))
 
-@app.route('/reinforcement')
+@app.route('/reinforcement_dashboard')
 def reinforcement_dashboard():
-    """Dashboard showing reinforcement learning progress and stats."""
-    # Get learning statistics
-    stats = reinforcement.get_learning_stats()
+    """Show simplified reinforcement learning dashboard."""
+    try:
+        # Initialize the reinforcement learning module
+        rl = FeedbackReinforcementLearning()
+        
+        # Get learning stats
+        stats = rl.get_learning_stats()
+        
+        # Generate a simple trend chart if we have timestamps and ratings
+        trend_data = None
+        has_trend_data = False
+        
+        if stats['status'] == 'success' and len(stats.get('timestamps', [])) > 1:
+            try:
+                import matplotlib
+                matplotlib.use('Agg')  # Use non-interactive backend
+                import matplotlib.pyplot as plt
+                import io
+                import base64
+                from datetime import datetime
+                
+                # Parse timestamps and format for display
+                dates = [datetime.fromisoformat(ts) for ts in stats['timestamps']]
+                formatted_dates = [dt.strftime('%m/%d') for dt in dates]
+                
+                # Create a simple figure and plot data
+                plt.figure(figsize=(8, 4))
+                plt.plot(formatted_dates, stats['ratings'], marker='o', linestyle='-', color='#0d6efd')
+                
+                # Add moving average
+                if len(stats.get('moving_avg', [])) > 0:
+                    plt.plot(formatted_dates, stats['moving_avg'], linestyle='--', color='#dc3545', label='Average')
+                
+                # Format plot
+                plt.xlabel('Date')
+                plt.ylabel('Rating')
+                plt.title('Feedback Ratings')
+                plt.grid(True, linestyle='--', alpha=0.7)
+                plt.ylim(0, 1.1)
+                plt.legend()
+                
+                # Save to base64 string
+                buffer = io.BytesIO()
+                plt.savefig(buffer, format='png')
+                buffer.seek(0)
+                trend_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                plt.close()
+                
+                has_trend_data = True
+            except Exception as e:
+                print(f"Error generating trend chart: {e}")
+        
+        return render_template('reinforcement_dashboard.html', 
+                              stats=stats,
+                              has_trend_data=has_trend_data,
+                              trend_data=trend_data)
     
-    # If there's enough data, prepare for visualization
-    has_trend_data = False
-    trend_data = None
-    
-    if stats.get('status') == 'success' and len(stats.get('ratings', [])) > 1:
-        has_trend_data = True
-        
-        # Prepare trend chart data
-        ratings = stats.get('ratings', [])
-        timestamps = stats.get('timestamps', [])
-        moving_avg = stats.get('moving_avg', [])
-        
-        # Create a simple plot with matplotlib
-        plt.figure(figsize=(10, 6))
-        plt.plot(range(len(ratings)), ratings, 'o-', label='Instructor Ratings')
-        
-        if moving_avg:
-            # Adjust x-coordinates for moving average (centered window)
-            window_size = 5
-            ma_x = [i + window_size//2 for i in range(len(moving_avg))]
-            if len(ma_x) > 0 and len(moving_avg) > 0 and max(ma_x) < len(ratings):
-                plt.plot(ma_x, moving_avg, 'r-', label='Moving Average')
-        
-        plt.xlabel('Submission Index')
-        plt.ylabel('Rating (0-1)')
-        plt.title('Feedback Rating Trend')
-        plt.legend()
-        plt.grid(True)
-        
-        # Convert plot to base64 for embedding in HTML
-        buffer = BytesIO()
-        plt.savefig(buffer, format='png')
-        buffer.seek(0)
-        trend_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
-        plt.close()
-    
-    # Check if we have enough data for fine-tuning
-    can_fine_tune = stats.get('samples_needed_for_training', 999) <= 0
-    
-    # Get distribution of ratings if available
-    rating_distribution = None
-    if stats.get('status') == 'success' and len(stats.get('ratings', [])) > 0:
-        ratings = np.array(stats.get('ratings', []))
-        bins = [0, 0.25, 0.5, 0.75, 1.0]
-        bin_labels = ['Poor (0-0.25)', 'Fair (0.25-0.5)', 'Good (0.5-0.75)', 'Excellent (0.75-1.0)']
-        
-        hist, _ = np.histogram(ratings, bins=bins)
-        rating_distribution = {
-            'counts': hist.tolist(),
-            'labels': bin_labels
-        }
-    
-    return render_template(
-        'reinforcement_dashboard.html',
-        stats=stats,
-        has_trend_data=has_trend_data,
-        trend_data=trend_data,
-        can_fine_tune=can_fine_tune,
-        rating_distribution=rating_distribution
-    )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        flash(f"Error loading reinforcement dashboard: {str(e)}", "danger")
+        return redirect(url_for('index'))
 
-@app.route('/start_fine_tuning', methods=['POST'])
-def start_fine_tuning():
-    """Start the fine-tuning process."""
-    # Prepare data for fine-tuning
-    prep_result = reinforcement.prepare_fine_tuning_data()
-    
-    if prep_result.get('status') == 'insufficient_data':
-        flash(f"Not enough data for fine-tuning. Need {prep_result.get('samples_needed')} more samples.")
-        return redirect(url_for('reinforcement_dashboard'))
-    
-    # Start fine-tuning (this would be implemented differently in production)
-    fine_tune_result = reinforcement.fine_tune_model()
-    
-    # Store results
-    session['fine_tune_result'] = fine_tune_result
-    
-    if fine_tune_result.get('status') == 'not_implemented':
-        flash("Fine-tuning functionality requires additional setup. See documentation.")
-    else:
-        flash("Fine-tuning process started. This may take some time.")
-    
-    return redirect(url_for('reinforcement_dashboard'))
+@app.route('/generate_improved_feedback/<student_id>', methods=['GET'])
+def generate_improved_feedback(student_id):
+    """Generate feedback using the reinforcement learning system."""
+    try:
+        # Check if we have a valid student submission
+        if student_id not in submissions:
+            flash(f"Student submission {student_id} not found.", "danger")
+            return redirect(url_for('index'))
+        
+        # Get the submission data
+        submission = submissions[student_id]
+        
+        # Extract the Java files
+        java_files = submission.get('java_files', {})
+        if not java_files:
+            flash("No Java files found for this submission.", "warning")
+            return redirect(url_for('view_feedback', student_id=student_id))
+        
+        # Combine all Java files into one for analysis
+        combined_code = ""
+        for file_path, content in java_files.items():
+            combined_code += f"// {file_path}\n{content}\n\n"
+        
+        # Get detected violations if available
+        detected_violations = submission.get('detected_violations', [])
+        
+        # Initialize RL module
+        rl = FeedbackReinforcementLearning()
+        
+        # Generate improved feedback
+        improved_feedback = rl.generate_improved_feedback(combined_code, detected_violations)
+        
+        if improved_feedback:
+            # Update the submission with the improved feedback
+            submission['improved_feedback'] = improved_feedback
+            submission['has_improved_feedback'] = True
+            
+            # Save submissions data
+            save_submissions()
+            
+            flash("Improved feedback generated successfully!", "success")
+        else:
+            flash("Failed to generate improved feedback.", "warning")
+        
+        # Redirect to the feedback view
+        return redirect(url_for('view_feedback', student_id=student_id))
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        flash(f"Error generating improved feedback: {str(e)}", "danger")
+        return redirect(url_for('index'))
 
 @app.route('/inspect_index')
 def inspect_index():

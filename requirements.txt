@@ -7,21 +7,26 @@ faiss-cpu==1.7.4
 sentence-transformers
 javalang
 huggingface_hub>=0.14.1
-ollama
+ollama>=0.1.5
 
 # UI dependencies
-Flask
-Werkzeug
-Jinja2
-waitress
+Flask>=2.0.0
+Werkzeug>=2.0.0
+Jinja2>=3.0.0
+waitress>=2.0.0
 
 # Feedback evaluation dependencies
-rouge-score
-rouge
-transformers
-torch
-scikit-learn
-matplotlib
+rouge-score>=0.1.2
+rouge>=1.0.1
+transformers>=4.15.0
+torch>=1.10.0
+scikit-learn>=1.0.2
+matplotlib>=3.5.0
+
+# RLHF dependencies
+joblib>=1.1.0
+tqdm>=4.62.0
+pickle-mixin>=1.0.2
 
 # Spacy language model
 en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.6.0/en_core_web_sm-3.6.0.tar.gz

@@ -21,6 +21,28 @@
                         <div class="markdown-content">{{ feedback.generated_feedback }}</div>
                     </div>
                 </div>
+                
+                <!-- RLHF Improved Feedback (if available) -->
+                {% if feedback.has_rlhf_feedback %}
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0">RLHF-Improved Feedback</h4>
+                            <span class="badge bg-light text-dark">AI-refined</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="markdown-content">{{ feedback.rlhf_feedback }}</div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="d-grid gap-2 mb-4">
+                    <a href="{{ url_for('generate_improved_feedback', student_id=student_id) }}" class="btn btn-outline-success">
+                        <i class="bi bi-robot"></i> Generate RLHF-Improved Feedback
+                    </a>
+                    <small class="text-muted text-center">Uses Reinforcement Learning from Human Feedback to generate improved feedback based on instructor preferences</small>
+                </div>
+                {% endif %}
             </div>
             
             <div class="col-md-4">
@@ -92,7 +114,34 @@
                             </div>
                         </div>
                         
-                        <!-- NEW: Alignment Metrics -->
+                        <!-- RLHF Metrics (if available) -->
+                        {% if feedback.has_rlhf_feedback and feedback.rlhf_metrics %}
+                        <div class="rlhf-metrics mt-3 pt-3 border-top">
+                            <h6 class="text-center">RLHF Improvement</h6>
+                            <div class="progress mb-2">
+                                {% set improvement = feedback.rlhf_metrics.improvement_score %}
+                                {% set imp_percent = (improvement * 100)|int %}
+                                
+                                {% set imp_class = "" %}
+                                {% if improvement >= 0.2 %}
+                                    {% set imp_class = "bg-success" %}
+                                {% elif improvement >= 0.1 %}
+                                    {% set imp_class = "bg-info" %}
+                                {% elif improvement >= 0.05 %}
+                                    {% set imp_class = "bg-warning" %}
+                                {% else %}
+                                    {% set imp_class = "bg-secondary" %}
+                                {% endif %}
+                                
+                                <div class="progress-bar {{ imp_class }} progress-width-{{ imp_percent }}" role="progressbar"></div>
+                            </div>
+                            <div class="text-center small">
+                                <span>{{ imp_percent }}% improvement</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- NEW: Alignment Metrics (if available) -->
                         {% if feedback.feedback_evaluation %}
                         <div class="alignment-metrics">
                             <div class="collapse-header" data-bs-toggle="collapse" data-bs-target="#alignmentScores">
@@ -118,115 +167,6 @@
                                         {% endif %}
                                         
                                         <div class="progress-bar {{ align_progress_class }} progress-width-{{ align_percent }}" role="progressbar"></div>
-                                    </div>
-                                </div>
-                                
-                                <!-- ROUGE Scores -->
-                                <div class="mb-1">
-                                    <small class="d-block text-muted mb-1">ROUGE Scores:</small>
-                                    <div class="d-flex justify-content-between">
-                                        {% set rouge1 = feedback.feedback_evaluation.alignment_scores.rouge['rouge-1-f'] %}
-                                        {% set rouge2 = feedback.feedback_evaluation.alignment_scores.rouge['rouge-2-f'] %}
-                                        {% set rougeL = feedback.feedback_evaluation.alignment_scores.rouge['rouge-l-f'] %}
-                                        
-                                        {% set rouge1_class = "" %}
-                                        {% if rouge1 >= 0.7 %}
-                                            {% set rouge1_class = "score-high" %}
-                                        {% elif rouge1 >= 0.5 %}
-                                            {% set rouge1_class = "score-medium" %}
-                                        {% elif rouge1 >= 0.3 %}
-                                            {% set rouge1_class = "score-low" %}
-                                        {% else %}
-                                            {% set rouge1_class = "score-poor" %}
-                                        {% endif %}
-                                        
-                                        {% set rouge2_class = "" %}
-                                        {% if rouge2 >= 0.7 %}
-                                            {% set rouge2_class = "score-high" %}
-                                        {% elif rouge2 >= 0.5 %}
-                                            {% set rouge2_class = "score-medium" %}
-                                        {% elif rouge2 >= 0.3 %}
-                                            {% set rouge2_class = "score-low" %}
-                                        {% else %}
-                                            {% set rouge2_class = "score-poor" %}
-                                        {% endif %}
-                                        
-                                        {% set rougeL_class = "" %}
-                                        {% if rougeL >= 0.7 %}
-                                            {% set rougeL_class = "score-high" %}
-                                        {% elif rougeL >= 0.5 %}
-                                            {% set rougeL_class = "score-medium" %}
-                                        {% elif rougeL >= 0.3 %}
-                                            {% set rougeL_class = "score-low" %}
-                                        {% else %}
-                                            {% set rougeL_class = "score-poor" %}
-                                        {% endif %}
-                                        
-                                        <div class="text-center">
-                                            <span class="alignment-score {{ rouge1_class }}">
-                                                {{ (rouge1 * 100)|round|int }}%
-                                            </span>
-                                            <small class="d-block">ROUGE-1</small>
-                                        </div>
-                                        
-                                        <div class="text-center">
-                                            <span class="alignment-score {{ rouge2_class }}">
-                                                {{ (rouge2 * 100)|round|int }}%
-                                            </span>
-                                            <small class="d-block">ROUGE-2</small>
-                                        </div>
-                                        
-                                        <div class="text-center">
-                                            <span class="alignment-score {{ rougeL_class }}">
-                                                {{ (rougeL * 100)|round|int }}%
-                                            </span>
-                                            <small class="d-block">ROUGE-L</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- BERTScore -->
-                                <div class="mt-2">
-                                    <small class="d-block text-muted mb-1">Semantic Similarity:</small>
-                                    <div class="d-flex justify-content-between">
-                                        {% set bert_score = feedback.feedback_evaluation.alignment_scores.bert_score %}
-                                        {% set bleu_score = feedback.feedback_evaluation.alignment_scores.bleu_score %}
-                                        
-                                        {% set bert_class = "" %}
-                                        {% if bert_score >= 0.7 %}
-                                            {% set bert_class = "score-high" %}
-                                        {% elif bert_score >= 0.5 %}
-                                            {% set bert_class = "score-medium" %}
-                                        {% elif bert_score >= 0.3 %}
-                                            {% set bert_class = "score-low" %}
-                                        {% else %}
-                                            {% set bert_class = "score-poor" %}
-                                        {% endif %}
-                                        
-                                        {% set bleu_class = "" %}
-                                        {% if bleu_score >= 0.4 %}
-                                            {% set bleu_class = "score-high" %}
-                                        {% elif bleu_score >= 0.2 %}
-                                            {% set bleu_class = "score-medium" %}
-                                        {% elif bleu_score >= 0.1 %}
-                                            {% set bleu_class = "score-low" %}
-                                        {% else %}
-                                            {% set bleu_class = "score-poor" %}
-                                        {% endif %}
-                                        
-                                        <div class="text-center">
-                                            <span class="alignment-score {{ bert_class }}">
-                                                {{ (bert_score * 100)|round|int }}%
-                                            </span>
-                                            <small class="d-block">BERTScore</small>
-                                        </div>
-                                        
-                                        <div class="text-center">
-                                            <span class="alignment-score {{ bleu_class }}">
-                                                {{ (bleu_score * 100)|round|int }}%
-                                            </span>
-                                            <small class="d-block">BLEU</small>
-                                        </div>
                                     </div>
                                 </div>
                                 
@@ -256,19 +196,6 @@
                         {% endif %}
                     </div>
                 </div>
-                
-                {% if feedback.closest_matches %}
-                <div class="card mb-4">
-                    <div class="card-header">Similar Submissions</div>
-                    <div class="card-body p-2">
-                        <ul class="list-group list-group-flush">
-                            {% for match in feedback.closest_matches %}
-                            <li class="list-group-item p-2">{{ match }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-                {% endif %}
             </div>
         </div>
         

@@ -7,18 +7,10 @@
     "learning_rate": 5e-5,
     "epochs": 3,
     "batch_size": 4,
-    "training_settings": {
-        "use_peft": true,
-        "lora_r": 16,
-        "lora_alpha": 32,
-        "lora_dropout": 0.05,
-        "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"]
-    },
-    "evaluation_metrics": [
-        "accuracy",
-        "specificity",
-        "actionability",
-        "completeness",
-        "instructor_alignment"
-    ]
+    "rlhf_config": {
+        "num_candidates": 3,
+        "max_iterations": 2,
+        "use_instructor_feedback": true,
+        "feedback_improvement_prompt": "Make the feedback more specific, actionable, and focused on SOLID principles."
+    }
 }

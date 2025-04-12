@@ -3,13 +3,46 @@
 <head>
     <title>Review Feedback - {{ student_id }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/feedback_styles.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/review_feedback.css') }}" rel="stylesheet">
+    <style>
+        .code-viewer {
+            max-height: 500px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .feedback-editor {
+            font-family: monospace;
+            min-height: 400px;
+            line-height: 1.5;
+        }
+        .rating-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-4">
         <h1>Review Feedback for {{ student_id }}</h1>
         <a href="{{ url_for('index') }}" class="btn btn-outline-secondary mb-4">Back to List</a>
+        
+        <!-- Feedback Learning Banner -->
+        <div class="alert alert-info mb-4">
+            <div class="d-flex">
+                <div class="me-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-lightbulb" viewBox="0 0 16 16">
+                        <path d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h5 class="alert-heading">Feedback Learning Mode</h5>
+                    <p class="mb-0">Your improvements help the system provide better feedback for future students!</p>
+                </div>
+            </div>
+        </div>
         
         <div class="row">
             <!-- Left column: Code and Model Feedback -->
@@ -53,21 +86,6 @@
                         <div class="markdown-content">{{ model_feedback }}</div>
                     </div>
                 </div>
-                
-                <!-- Evaluation Metrics -->
-                <div class="card mb-4">
-                    <div class="card-header">Evaluation Metrics</div>
-                    <div class="card-body">
-                        <div id="metricsChart" 
-                             class="metrics-chart-container"
-                             data-accuracy="{{ metrics.accuracy|default(0.7, true) }}"
-                             data-specificity="{{ metrics.specificity|default(0.8, true) }}"
-                             data-actionability="{{ metrics.actionability|default(0.6, true) }}"
-                             data-completeness="{{ metrics.completeness|default(0.7, true) }}"
-                             data-readability="{{ metrics.readability|default(0.8, true) }}">
-                        </div>
-                    </div>
-                </div>
             </div>
             
             <!-- Right column: Instructor Feedback Form -->
@@ -78,99 +96,18 @@
                         <form id="instructorFeedbackForm" action="{{ url_for('submit_feedback_review', student_id=student_id) }}" method="post">
                             <!-- Rating Slider -->
                             <div class="mb-3">
-                                <label for="feedbackRating" class="form-label">Rate Model Feedback Quality (0-100)</label>
+                                <label for="feedbackRating" class="form-label">Rate Feedback Quality (0-100)</label>
                                 <div class="rating-slider-container">
                                     <input type="range" class="form-range flex-grow-1 me-2" min="0" max="100" step="5" id="feedbackRating" name="rating" value="70">
                                     <span id="ratingValue" class="badge bg-primary">70</span>
                                 </div>
                             </div>
                             
-                            <!-- Rating Categories -->
-                            <div class="mb-3 category-ratings">
-                                <div>
-                                    <label class="form-label">Accuracy</label>
-                                    <select class="form-select form-select-sm" name="accuracy_rating">
-                                        <option value="1">Poor</option>
-                                        <option value="2">Fair</option>
-                                        <option value="3" selected>Good</option>
-                                        <option value="4">Excellent</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="form-label">Specificity</label>
-                                    <select class="form-select form-select-sm" name="specificity_rating">
-                                        <option value="1">Poor</option>
-                                        <option value="2">Fair</option>
-                                        <option value="3" selected>Good</option>
-                                        <option value="4">Excellent</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="form-label">Actionability</label>
-                                    <select class="form-select form-select-sm" name="actionability_rating">
-                                        <option value="1">Poor</option>
-                                        <option value="2">Fair</option>
-                                        <option value="3" selected>Good</option>
-                                        <option value="4">Excellent</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="form-label">Completeness</label>
-                                    <select class="form-select form-select-sm" name="completeness_rating">
-                                        <option value="1">Poor</option>
-                                        <option value="2">Fair</option>
-                                        <option value="3" selected>Good</option>
-                                        <option value="4">Excellent</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <!-- Issues Checkbox List -->
-                            <div class="mb-3 issues-checklist">
-                                <label class="form-label">Issues with Model Feedback:</label>
-                                <div class="form-check issue-item">
-                                    <input class="form-check-input" type="checkbox" id="issue1" name="issues" value="missed_violations">
-                                    <label class="form-check-label" for="issue1">
-                                        Missed important violations
-                                    </label>
-                                </div>
-                                <div class="form-check issue-item">
-                                    <input class="form-check-input" type="checkbox" id="issue2" name="issues" value="false_positives">
-                                    <label class="form-check-label" for="issue2">
-                                        Identified false positives
-                                    </label>
-                                </div>
-                                <div class="form-check issue-item">
-                                    <input class="form-check-input" type="checkbox" id="issue3" name="issues" value="unclear_feedback">
-                                    <label class="form-check-label" for="issue3">
-                                        Feedback is unclear or confusing
-                                    </label>
-                                </div>
-                                <div class="form-check issue-item">
-                                    <input class="form-check-input" type="checkbox" id="issue4" name="issues" value="no_actionable">
-                                    <label class="form-check-label" for="issue4">
-                                        Lacks actionable suggestions
-                                    </label>
-                                </div>
-                                <div class="form-check issue-item">
-                                    <input class="form-check-input" type="checkbox" id="issue5" name="issues" value="not_specific">
-                                    <label class="form-check-label" for="issue5">
-                                        Not specific enough
-                                    </label>
-                                </div>
-                            </div>
-                            
                             <!-- Corrected Feedback -->
                             <div class="mb-3">
-                                <label for="correctedFeedback" class="form-label">Corrected Feedback</label>
+                                <label for="correctedFeedback" class="form-label">Improved Feedback</label>
                                 <textarea class="form-control feedback-editor" id="correctedFeedback" name="corrected_feedback" rows="15">{{ model_feedback }}</textarea>
                                 <div class="form-text">Edit the feedback above to correct any issues and provide the ideal feedback</div>
-                            </div>
-                            
-                            <!-- Additional Comments -->
-                            <div class="mb-3">
-                                <label for="additionalComments" class="form-label">Additional Comments (For RL Training)</label>
-                                <textarea class="form-control additional-comments" id="additionalComments" name="additional_comments" rows="3" placeholder="Explain what was wrong with the model feedback and how it should be improved"></textarea>
                             </div>
                             
                             <div class="d-grid gap-2">
@@ -186,7 +123,44 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{{ url_for('static', filename='js/review_feedback.js') }}"></script>
+    <script>
+        // Initialize markdown renderer
+        document.addEventListener('DOMContentLoaded', function() {
+            const markdownElements = document.querySelectorAll('.markdown-content');
+            
+            marked.setOptions({
+                breaks: true,
+                gfm: true,
+                headerIds: false,
+                mangle: false
+            });
+            
+            markdownElements.forEach(function(element) {
+                element.innerHTML = marked.parse(element.textContent);
+            });
+            
+            // Setup rating slider
+            const ratingSlider = document.getElementById('feedbackRating');
+            const ratingValue = document.getElementById('ratingValue');
+            
+            if (ratingSlider && ratingValue) {
+                ratingSlider.addEventListener('input', function() {
+                    ratingValue.textContent = this.value;
+                    
+                    // Change badge color based on value
+                    ratingValue.className = 'badge ';
+                    if (this.value >= 80) {
+                        ratingValue.className += 'bg-success';
+                    } else if (this.value >= 60) {
+                        ratingValue.className += 'bg-primary';
+                    } else if (this.value >= 40) {
+                        ratingValue.className += 'bg-warning';
+                    } else {
+                        ratingValue.className += 'bg-danger';
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

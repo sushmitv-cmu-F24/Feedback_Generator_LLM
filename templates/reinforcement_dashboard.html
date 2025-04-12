@@ -1,37 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Reinforcement Learning Dashboard</title>
+    <title>Feedback Learning Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/feedback_styles.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/reinforcement_dashboard.css') }}" rel="stylesheet">
 </head>
 <body>
     <div class="container mt-4">
-        <h1>Reinforcement Learning Dashboard</h1>
+        <h1>Feedback Learning Dashboard</h1>
         <a href="{{ url_for('index') }}" class="btn btn-outline-secondary mb-4">Back to List</a>
         
         <div class="row">
             <!-- Stats Overview -->
             <div class="col-md-4">
-                <div class="card mb-4 stat-card">
+                <div class="card stat-card">
                     <div class="card-header bg-primary text-white">Learning Stats</div>
                     <div class="card-body">
                         {% if stats.status == 'success' %}
                             <div class="mb-3">
-                                <h4>Collected Samples</h4>
+                                <h4>Collected Feedback</h4>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span>Total submissions with feedback:</span>
                                     <span class="badge bg-primary">{{ stats.total_samples }}</span>
                                 </div>
                                 
-                                {% if stats.samples_needed_for_training > 0 %}
-                                    <div class="alert alert-warning-soft mt-2">
-                                        Need {{ stats.samples_needed_for_training }} more samples for fine-tuning
+                                {% if stats.samples_needed_for_improvement > 0 %}
+                                    <div class="alert alert-warning mt-2">
+                                        Need {{ stats.samples_needed_for_improvement }} more samples for improved feedback
                                     </div>
                                 {% else %}
-                                    <div class="alert alert-success-soft mt-2">
-                                        Sufficient data for fine-tuning
+                                    <div class="alert alert-success mt-2">
+                                        Sufficient data for generating improved feedback
                                     </div>
                                 {% endif %}
                             </div>
@@ -40,41 +39,27 @@
                                 <h4>Rating Statistics</h4>
                                 <ul class="list-group list-group-flush">
                                     <li class="list-group-item d-flex justify-content-between">
-                                        <span class="stat-label">Average Rating:</span>
-                                        <span class="badge bg-primary stat-value">{{ (stats.avg_rating * 100)|int }}%</span>
+                                        <span>Average Rating:</span>
+                                        <span class="badge bg-primary">{{ (stats.avg_rating * 100)|int }}%</span>
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between">
-                                        <span class="stat-label">Median Rating:</span>
-                                        <span class="badge bg-primary stat-value">{{ (stats.median_rating * 100)|int }}%</span>
+                                        <span>Median Rating:</span>
+                                        <span class="badge bg-primary">{{ (stats.median_rating * 100)|int }}%</span>
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between">
-                                        <span class="stat-label">Min Rating:</span>
-                                        <span class="badge bg-primary stat-value">{{ (stats.min_rating * 100)|int }}%</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between">
-                                        <span class="stat-label">Max Rating:</span>
-                                        <span class="badge bg-primary stat-value">{{ (stats.max_rating * 100)|int }}%</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between">
-                                        <span class="stat-label">Trend:</span>
+                                        <span>Trend:</span>
                                         {% if stats.recent_trend == 'improving' %}
-                                            <span class="badge status-improving">Improving</span>
+                                            <span class="badge bg-success">Improving</span>
+                                        {% elif stats.recent_trend == 'stable' %}
+                                            <span class="badge bg-info">Stable</span>
                                         {% else %}
-                                            <span class="badge status-stable">Stable</span>
+                                            <span class="badge bg-warning">Declining</span>
                                         {% endif %}
                                     </li>
                                 </ul>
                             </div>
-                            
-                            {% if can_fine_tune %}
-                                <div class="fine-tuning-container">
-                                    <form action="{{ url_for('start_fine_tuning') }}" method="post">
-                                        <button type="submit" class="btn fine-tuning-button w-100">Start Fine-Tuning</button>
-                                    </form>
-                                </div>
-                            {% endif %}
                         {% elif stats.status == 'no_data' %}
-                            <div class="alert alert-info-soft">
+                            <div class="alert alert-info">
                                 No feedback data collected yet. Review some model feedback to get started.
                             </div>
                         {% else %}
@@ -84,25 +69,11 @@
                         {% endif %}
                     </div>
                 </div>
-                
-                {% if rating_distribution %}
-                <div class="card mb-4 stat-card">
-                    <div class="card-header">Rating Distribution</div>
-                    <div class="card-body">
-                        <div class="distribution-chart-container">
-                            <canvas id="distributionChart" 
-                                   data-labels='{{ rating_distribution.labels|tojson }}'
-                                   data-counts='{{ rating_distribution.counts|tojson }}'>
-                            </canvas>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
             </div>
             
             <!-- Trend Chart -->
             <div class="col-md-8">
-                <div class="card mb-4">
+                <div class="card">
                     <div class="card-header bg-primary text-white">Feedback Rating Trend</div>
                     <div class="card-body">
                         {% if has_trend_data %}
@@ -110,7 +81,7 @@
                                 <img src="data:image/png;base64,{{ trend_data }}" class="trend-image" alt="Rating Trend Chart">
                             </div>
                         {% else %}
-                            <div class="alert alert-info-soft">
+                            <div class="alert alert-info">
                                 Not enough data to show trends. Need at least 2 feedback submissions.
                             </div>
                         {% endif %}
@@ -118,24 +89,24 @@
                 </div>
                 
                 <!-- Data Collection Progress -->
-                <div class="card mb-4">
+                <div class="card mt-3">
                     <div class="card-header">Data Collection Progress</div>
                     <div class="card-body">
-                        <h5>Progress toward fine-tuning</h5>
+                        <h5>Progress toward improved feedback</h5>
                         {% if stats.status == 'success' %}
-                            {% set progress_percent = (stats.total_samples / (stats.total_samples + stats.samples_needed_for_training)) * 100 %}
+                            {% set progress_percent = (stats.total_samples / (stats.total_samples + stats.samples_needed_for_improvement)) * 100 %}
                             {% if progress_percent >= 100 %}
                                 {% set progress_percent = 100 %}
                             {% endif %}
                             
                             <div class="position-relative">
                                 <div class="progress-label">
-                                    {{ stats.total_samples }} / {{ stats.total_samples + stats.samples_needed_for_training }}
+                                    {{ stats.total_samples }} / {{ stats.total_samples + stats.samples_needed_for_improvement }}
                                 </div>
                                 <div class="progress progress-tall mb-3">
-                                    <div class="progress-bar bg-success progress-bar-striped" 
-                                        role="progressbar" 
-                                        style="width: {{ progress_percent }}%;" 
+                                    <div class="progress-bar bg-success progress-bar-striped progress-width-dynamic" 
+                                        role="progressbar"
+                                        data-progress="{{ progress_percent }}"
                                         aria-valuenow="{{ progress_percent }}" 
                                         aria-valuemin="0" 
                                         aria-valuemax="100">
@@ -145,17 +116,17 @@
                             
                             {% if progress_percent < 100 %}
                                 <p class="text-muted">
-                                    Need {{ stats.samples_needed_for_training }} more instructor feedback submissions before fine-tuning can begin.
+                                    Need {{ stats.samples_needed_for_improvement }} more instructor feedback submissions before improvements can be generated.
                                 </p>
                             {% else %}
                                 <p class="text-success">
-                                    ✓ Sufficient data collected for fine-tuning!
+                                    ✓ Sufficient data collected for generating improved feedback!
                                 </p>
                             {% endif %}
                         {% else %}
                             <div class="position-relative">
                                 <div class="progress-label">
-                                    0 / 20
+                                    0 / 3
                                 </div>
                                 <div class="progress progress-tall mb-3">
                                     <div class="progress-bar bg-info progress-bar-striped" 
@@ -168,29 +139,52 @@
                                 </div>
                             </div>
                             <p class="text-muted">
-                                Start reviewing model feedback to collect data for reinforcement learning.
+                                Start reviewing model feedback to collect data for improved feedback generation.
                             </p>
                         {% endif %}
                     </div>
                 </div>
                 
-                <!-- Collapsible Documentation Section -->
-                <div class="card mb-4">
-                    <div class="card-header collapsible-header">
-                        Reinforcement Learning Documentation
-                        <span class="collapse-indicator">▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        <div class="card-body">
-                            <h5>How Reinforcement Learning Works</h5>
-                            <p>This system uses Reinforcement Learning from Human Feedback (RLHF) to improve the feedback generation model over time:</p>
-                            <ol>
-                                <li><strong>Data Collection:</strong> Instructors review and correct model-generated feedback</li>
-                                <li><strong>Training Data:</strong> These corrections form training pairs that teach the model what good feedback looks like</li>
-                                <li><strong>Fine-Tuning:</strong> Once enough samples are collected, the model is fine-tuned to better match instructor preferences</li>
-                                <li><strong>Continuous Improvement:</strong> The process repeats, with the model getting progressively better</li>
-                            </ol>
-                            <p>The dashboard shows your progress toward collecting enough data for effective fine-tuning.</p>
+                <!-- How It Works Section -->
+                <div class="card mt-3">
+                    <div class="card-header">How Feedback Learning Works</div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h5>Simple 3-Step Process:</h5>
+                                <ol class="mb-4">
+                                    <li><strong>Collect Feedback</strong> - Instructors review and correct model-generated feedback</li>
+                                    <li><strong>Learn Patterns</strong> - System learns what makes good feedback based on instructor ratings</li>
+                                    <li><strong>Apply Learning</strong> - New feedback is improved using patterns from instructor examples</li>
+                                </ol>
+                                
+                                <div class="row g-3 text-center">
+                                    <div class="col-md-4">
+                                        <div class="card bg-light h-100">
+                                            <div class="card-body">
+                                                <h5 class="card-title">1. Collect</h5>
+                                                <p class="card-text">Rate and improve automated feedback</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card bg-light h-100">
+                                            <div class="card-body">
+                                                <h5 class="card-title">2. Learn</h5>
+                                                <p class="card-text">Learn from instructor examples</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card bg-light h-100">
+                                            <div class="card-body">
+                                                <h5 class="card-title">3. Apply</h5>
+                                                <p class="card-text">Generate better feedback automatically</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -200,7 +194,14 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{{ url_for('static', filename='js/reinforcement_dashboard.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set dynamic progress bar widths based on data-progress attribute
+            document.querySelectorAll('.progress-width-dynamic').forEach(function(element) {
+                const progressValue = element.getAttribute('data-progress');
+                element.style.width = progressValue + '%';
+            });
+        });
+    </script>
 </body>
 </html>

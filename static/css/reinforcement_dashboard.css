@@ -5,21 +5,11 @@
     border-radius: 0.5rem;
     transition: all 0.3s ease;
     border-left: 4px solid #0d6efd;
+    margin-bottom: 1rem;
 }
 
 .stat-card:hover {
     box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
-}
-
-/* Statistics display */
-.stat-value {
-    font-size: 1.25rem;
-    font-weight: bold;
-}
-
-.stat-label {
-    font-size: 0.85rem;
-    color: #6c757d;
 }
 
 /* Progress indicators */
@@ -38,12 +28,6 @@
 }
 
 /* Trend visualization */
-.trend-image {
-    max-width: 100%;
-    height: auto;
-    border-radius: 0.25rem;
-}
-
 .trend-container {
     padding: 1rem;
     background-color: white;
@@ -51,66 +35,43 @@
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
-/* Chart styling */
-.chart-container {
-    position: relative;
-    height: 250px;
-    margin-bottom: 1rem;
+.trend-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.25rem;
 }
 
 /* Alert styling */
-.alert-success-soft {
+.alert-success {
     background-color: rgba(40, 167, 69, 0.15);
     border-color: rgba(40, 167, 69, 0.3);
     color: #155724;
 }
 
-.alert-warning-soft {
+.alert-warning {
     background-color: rgba(255, 193, 7, 0.15);
     border-color: rgba(255, 193, 7, 0.3);
     color: #856404;
 }
 
-.alert-info-soft {
+.alert-info {
     background-color: rgba(23, 162, 184, 0.15);
     border-color: rgba(23, 162, 184, 0.3);
     color: #0c5460;
 }
 
-/* Status badges */
-.status-improving {
-    background-color: #28a745;
+/* Process step cards */
+.card.bg-light {
+    transition: all 0.3s ease;
 }
 
-.status-stable {
-    background-color: #17a2b8;
+.card.bg-light:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 
-.status-declining {
-    background-color: #dc3545;
-}
-
-/* Fine-tuning section */
-.fine-tuning-container {
-    background-color: #f8f9fa;
-    border-radius: 0.5rem;
-    padding: 1rem;
-    margin-top: 1rem;
-}
-
-.fine-tuning-button {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
-    font-weight: bold;
-}
-
-.fine-tuning-button:hover {
-    background-color: #218838;
-    border-color: #1e7e34;
-}
-
-/* Distribution chart styling */
-.distribution-chart-container {
-    height: 200px;
+/* Dynamic progress width - This will be set via JavaScript */
+.progress-width-dynamic {
+    transition: width 0.6s ease;
+    width: 0%; /* Default starting width */
 }
