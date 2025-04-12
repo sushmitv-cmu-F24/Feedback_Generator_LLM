@@ -294,6 +294,7 @@ def review_feedback(student_id):
         java_files=java_files
     )
 
+# Update the submit_feedback_review function to clear the cache
 @app.route('/submit_feedback_review/<student_id>', methods=['POST'])
 def submit_feedback_review(student_id):
     """Simplified handler for instructor feedback submission."""
@@ -311,6 +312,11 @@ def submit_feedback_review(student_id):
     # Save the feedback to the submission
     submission['instructor_feedback'] = corrected_feedback
     submission['instructor_rating'] = rating
+    
+    # Clear cache entry for this student to allow regeneration
+    if student_id in feedback_cache:
+        del feedback_cache[student_id]
+        print(f"Cleared feedback cache for {student_id}")
     
     # Store feedback for reinforcement learning
     try:
@@ -448,13 +454,18 @@ def generate_improved_feedback(student_id):
         improved_feedback = rl.generate_improved_feedback(combined_code, detected_violations)
         
         if improved_feedback:
-            # Update the submission with the improved feedback
-            submission['improved_feedback'] = improved_feedback
-            submission['has_improved_feedback'] = True
+            # Update the submission with the improved feedback - use consistent naming
+            submission['rlhf_feedback'] = improved_feedback
+            submission['has_rlhf_feedback'] = True
+            
+            # Clear cache for this student to ensure view shows updated feedback
+            if student_id in feedback_cache:
+                feedback_cache[student_id] = submission
             
             # Save submissions data
             save_submissions()
             
+            print(f"Generated RLHF feedback for {student_id}")
             flash("Improved feedback generated successfully!", "success")
         else:
             flash("Failed to generate improved feedback.", "warning")
