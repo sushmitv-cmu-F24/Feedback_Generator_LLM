@@ -3,6 +3,7 @@
 <head>
     <title>Automated Assignment Feedback</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 <body>
     <div class="container mt-4">
@@ -47,11 +48,11 @@
                                 <td>
                                     <div class="btn-group" role="group">
                                         {% if submission.has_feedback %}
-                                        <a href="{{ url_for('view_feedback', student_id=submission.student_id) }}" class="btn btn-primary btn-sm">
-                                            View Feedback
+                                        <a href="{{ url_for('student_view', student_id=submission.student_id) }}" class="btn btn-primary btn-sm">
+                                            Student View
                                         </a>
-                                        <a href="{{ url_for('review_feedback', student_id=submission.student_id) }}" class="btn btn-success btn-sm">
-                                            Review (RL)
+                                        <a href="{{ url_for('instructor_view', student_id=submission.student_id) }}" class="btn btn-success btn-sm">
+                                            Instructor View
                                         </a>
                                         {% else %}
                                         <a href="{{ url_for('generate_feedback', student_id=submission.student_id) }}" class="btn btn-outline-primary btn-sm">
@@ -81,7 +82,7 @@
                         <h6>How the Reinforcement Learning Works:</h6>
                         <ol>
                             <li>Upload student submissions and generate automatic feedback</li>
-                            <li>Click "Review (RL)" to evaluate and improve the generated feedback</li>
+                            <li>Use the Instructor View to evaluate and improve the generated feedback</li>
                             <li>The system collects your improvements as training data</li>
                             <li>Once enough data is collected, the model can be fine-tuned</li>
                             <li>The feedback quality improves over time as the model learns from your corrections</li>

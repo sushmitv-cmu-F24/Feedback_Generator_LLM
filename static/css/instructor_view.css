@@ -1,0 +1,247 @@
+/* instructor_view.css */
+
+/* Layout */
+body {
+    height: 100vh;
+    overflow: hidden;
+    background-color: #f8f8f8;
+}
+
+.container-fluid {
+    height: 100vh;
+    padding: 0;
+}
+
+.row {
+    height: 100%;
+    margin: 0;
+}
+
+/* Chat Header */
+.chat-header {
+    padding: 15px 20px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.chat-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Chat Section Styling */
+.chat-section {
+    height: 100vh;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+}
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 70px); /* Adjust for header */
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
+
+.chat-input {
+    border-top: 1px solid #dee2e6;
+    padding: 15px 20px;
+    background-color: white;
+}
+
+.input-feedback {
+    margin-top: 5px;
+    font-size: 0.85rem;
+    height: 20px;
+}
+
+/* Message Styling */
+.message {
+    margin-bottom: 20px;
+    max-width: 85%;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.user-message {
+    margin-left: auto;
+    background-color: #dcf8c6;
+}
+
+.ai-message {
+    margin-right: auto;
+    background-color: white;
+    border-left: 4px solid #0d6efd;
+}
+
+.system-message {
+    margin: 10px auto;
+    background-color: #f8f9fa;
+    border: 1px dashed #dee2e6;
+    text-align: center;
+    max-width: 90%;
+}
+
+.message-header {
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    border-radius: 12px 12px 0 0;
+}
+
+.message-content {
+    padding: 15px;
+    line-height: 1.5;
+}
+
+.message-sender {
+    font-weight: 600;
+    color: #333;
+}
+
+.message-time {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* Progress Metrics */
+.progress-metrics {
+    margin-top: 10px;
+}
+
+.metric-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.metric-label {
+    flex: 0 0 100px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.metric-value {
+    flex: 0 0 40px;
+    text-align: right;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.progress {
+    flex: 1;
+    height: 8px;
+    margin: 0 10px;
+}
+
+/* Score Circles */
+.score-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px auto;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.score-high {
+    background-color: #28a745;
+}
+
+.score-medium {
+    background-color: #17a2b8;
+}
+
+.score-low {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.score-poor {
+    background-color: #dc3545;
+}
+
+.score-desc {
+    font-size: 0.8rem;
+    color: #6c757d;
+    max-width: 150px;
+    margin: 0 auto;
+}
+
+/* Textarea auto-resize */
+textarea.form-control {
+    min-height: 38px;
+    max-height: 150px;
+    border-radius: 20px;
+    padding: 8px 15px;
+    resize: none;
+}
+
+/* Button styling */
+.btn-primary {
+    border-radius: 20px;
+    padding: 8px 20px;
+}
+
+/* Markdown styling */
+.markdown-content h2 {
+    font-size: 1.4rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.markdown-content h3 {
+    font-size: 1.2rem;
+    margin-top: 1.25rem;
+    margin-bottom: 0.75rem;
+    color: #444;
+}
+
+.markdown-content ul, 
+.markdown-content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.markdown-content li {
+    margin-bottom: 0.5rem;
+}
+
+.markdown-content pre {
+    background-color: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 4px;
+    overflow-x: auto;
+}
+
+.markdown-content code {
+    font-family: monospace;
+    color: #d63384;
+    background-color: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+}
+
+.markdown-content pre code {
+    color: inherit;
+    padding: 0;
+    background-color: transparent;
+}

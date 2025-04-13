@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Instructor Feedback Interface - {{ student_id }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/feedback.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/instructor_view.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Chat Interface -->
+            <div class="col-12 chat-section">
+                <div class="chat-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3>Instructor Feedback - {{ student_id }}</h3>
+                        <div>
+                            <button class="btn btn-info me-2" type="button" data-bs-toggle="modal" data-bs-target="#feedbackQualityModal">
+                                <i class="bi bi-bar-chart-fill"></i> Feedback Metrics
+                            </button>
+                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Back</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <!-- Initial System Message -->
+                        <div class="message system-message">
+                            <div class="message-content">
+                                <p>Welcome to the feedback refinement interface. The initially generated feedback is shown below. 
+                                You can refine it by sending messages in the chat.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- AI Generated Feedback -->
+                        <div class="message ai-message">
+                            <div class="message-header">
+                                <span class="message-sender">Generated Feedback</span>
+                                <span class="message-time">{{ now.strftime('%H:%M') }}</span>
+                            </div>
+                            <div class="message-content markdown-content">
+                                {{ feedback.generated_feedback }}
+                            </div>
+                        </div>
+                        
+                        <!-- Display previous chat history if available -->
+                        {% if feedback.chat_history %}
+                            {% for message in feedback.chat_history %}
+                                <div class="message {% if message.sender == 'instructor' %}user-message{% else %}ai-message{% endif %}">
+                                    <div class="message-header">
+                                        <span class="message-sender">{{ message.sender|capitalize }}</span>
+                                        <span class="message-time">{{ message.timestamp }}</span>
+                                    </div>
+                                    <div class="message-content {% if message.sender == 'ai' %}markdown-content{% endif %}">
+                                        {{ message.content }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Chat Input Form -->
+                    <div class="chat-input">
+                        <form id="chatForm" action="{{ url_for('submit_instructor_message', student_id=student_id) }}" method="post">
+                            <div class="input-group">
+                                <textarea class="form-control" id="messageInput" name="message" placeholder="Type your message..." rows="2" required></textarea>
+                                <button class="btn btn-primary" type="submit" id="sendButton">
+                                    <i class="bi bi-send"></i> Send
+                                </button>
+                            </div>
+                            <div class="input-feedback text-danger" id="inputError"></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Feedback Quality Metrics Modal -->
+    <div class="modal fade" id="feedbackQualityModal" tabindex="-1" aria-labelledby="feedbackQualityModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="feedbackQualityModalLabel">Feedback Quality Metrics</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Content Quality Metrics -->
+                    <div class="card mb-3">
+                        <div class="card-header">Content Quality</div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% if feedback.quality_metrics %}
+                                <div class="col-md-6">
+                                    <h6 class="text-center">Basic Metrics</h6>
+                                    <div class="progress-metrics">
+                                        <div class="metric-row">
+                                            <span class="metric-label">Specificity:</span>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-primary progress-width-{{ (feedback.quality_metrics.specificity * 100)|round|int }}" role="progressbar"></div>
+                                            </div>
+                                            <span class="metric-value">{{ (feedback.quality_metrics.specificity * 100)|round|int }}%</span>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span class="metric-label">Actionability:</span>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-success progress-width-{{ (feedback.quality_metrics.actionability * 100)|round|int }}" role="progressbar"></div>
+                                            </div>
+                                            <span class="metric-value">{{ (feedback.quality_metrics.actionability * 100)|round|int }}%</span>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span class="metric-label">Accuracy:</span>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-info progress-width-{{ (feedback.quality_metrics.accuracy * 100)|round|int }}" role="progressbar"></div>
+                                            </div>
+                                            <span class="metric-value">{{ (feedback.quality_metrics.accuracy * 100)|round|int }}%</span>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span class="metric-label">Completeness:</span>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-warning progress-width-{{ (feedback.quality_metrics.completeness * 100)|round|int }}" role="progressbar"></div>
+                                            </div>
+                                            <span class="metric-value">{{ (feedback.quality_metrics.completeness * 100)|round|int }}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if feedback.feedback_evaluation %}
+                                <div class="col-md-6">
+                                    <h6 class="text-center">Instructor Alignment</h6>
+                                    <div class="progress-metrics">
+                                        <div class="metric-row">
+                                            <span class="metric-label">Relevance:</span>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-primary progress-width-{{ (feedback.feedback_evaluation.relevance * 100)|round|int }}" role="progressbar"></div>
+                                            </div>
+                                            <span class="metric-value">{{ (feedback.feedback_evaluation.relevance * 100)|round|int }}%</span>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span class="metric-label">Clarity:</span>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-success progress-width-{{ (feedback.feedback_evaluation.clarity * 100)|round|int }}" role="progressbar"></div>
+                                            </div>
+                                            <span class="metric-value">{{ (feedback.feedback_evaluation.clarity * 100)|round|int }}%</span>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span class="metric-label">Specificity:</span>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-info progress-width-{{ (feedback.feedback_evaluation.specificity * 100)|round|int }}" role="progressbar"></div>
+                                            </div>
+                                            <span class="metric-value">{{ (feedback.feedback_evaluation.specificity * 100)|round|int }}%</span>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span class="metric-label">Actionability:</span>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-warning progress-width-{{ (feedback.feedback_evaluation.actionability * 100)|round|int }}" role="progressbar"></div>
+                                            </div>
+                                            <span class="metric-value">{{ (feedback.feedback_evaluation.actionability * 100)|round|int }}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Alignment Scores -->
+                    {% if feedback.feedback_evaluation and feedback.feedback_evaluation.alignment_scores %}
+                    <div class="card">
+                        <div class="card-header">Alignment Scores</div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="text-center mb-3">
+                                        <h6>ROUGE-L</h6>
+                                        <div class="score-circle 
+                                            {% if feedback.feedback_evaluation.alignment_scores.rouge['rouge-l-f'] >= 0.7 %}score-high
+                                            {% elif feedback.feedback_evaluation.alignment_scores.rouge['rouge-l-f'] >= 0.5 %}score-medium
+                                            {% elif feedback.feedback_evaluation.alignment_scores.rouge['rouge-l-f'] >= 0.3 %}score-low
+                                            {% else %}score-poor{% endif %}">
+                                            {{ (feedback.feedback_evaluation.alignment_scores.rouge['rouge-l-f'] * 100)|round|int }}%
+                                        </div>
+                                        <div class="score-desc">Content overlap with instructor feedback</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center mb-3">
+                                        <h6>BLEU Score</h6>
+                                        <div class="score-circle 
+                                            {% if feedback.feedback_evaluation.alignment_scores.bleu_score >= 0.7 %}score-high
+                                            {% elif feedback.feedback_evaluation.alignment_scores.bleu_score >= 0.5 %}score-medium
+                                            {% elif feedback.feedback_evaluation.alignment_scores.bleu_score >= 0.3 %}score-low
+                                            {% else %}score-poor{% endif %}">
+                                            {{ (feedback.feedback_evaluation.alignment_scores.bleu_score * 100)|round|int }}%
+                                        </div>
+                                        <div class="score-desc">Precision-based alignment with instructor</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center mb-3">
+                                        <h6>BERTScore</h6>
+                                        <div class="score-circle 
+                                            {% if feedback.feedback_evaluation.alignment_scores.bert_score >= 0.8 %}score-high
+                                            {% elif feedback.feedback_evaluation.alignment_scores.bert_score >= 0.7 %}score-medium
+                                            {% elif feedback.feedback_evaluation.alignment_scores.bert_score >= 0.6 %}score-low
+                                            {% else %}score-poor{% endif %}">
+                                            {{ (feedback.feedback_evaluation.alignment_scores.bert_score * 100)|round|int }}%
+                                        </div>
+                                        <div class="score-desc">Semantic similarity with instructor feedback</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+    <script src="{{ url_for('static', filename='js/instructor_view.js') }}"></script>
+</body>
+</html>

@@ -2,10 +2,11 @@ import os
 import json
 import base64
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.utils import secure_filename
 from evaluation_phase import extract_java_files_from_zip, evaluate_submission, inspect_faiss_index
 from feedback_metrics import FeedbackMetrics
+from feedback_evaluation import FeedbackEvaluation
 from reinforcement import FeedbackReinforcementLearning
 import atexit
 import sys
@@ -65,6 +66,30 @@ def load_submissions():
         if student_id not in submissions:
             submissions[student_id] = data
 
+# Add a new function to clear cache and reset submissions
+def clear_cache_on_startup():
+    """Clear cached feedback and reset submissions on application startup."""
+    global feedback_cache, submissions
+    
+    # Clear the global variables
+    feedback_cache = {}
+    submissions = {}
+    
+    # Delete or clear the submissions data file
+    submissions_file = os.path.join('data', 'submissions_data.json')
+    if os.path.exists(submissions_file):
+        try:
+            # Option 1: Delete the file
+            # os.remove(submissions_file)
+            
+            # Option 2: Clear the file by writing an empty dictionary
+            with open(submissions_file, 'w') as f:
+                json.dump({}, f)
+            
+            print("✅ Cache and submissions data cleared on startup")
+        except Exception as e:
+            print(f"⚠️ Error clearing submissions data: {e}")
+
 def save_submissions():
     """Save submissions data to disk."""
     submissions_file = os.path.join('data', 'submissions_data.json')
@@ -75,6 +100,9 @@ def save_submissions():
         print(f"Saved {len(submissions)} submissions to disk")
     except Exception as e:
         print(f"Error saving submissions data: {e}")
+
+# Clear cache on startup
+clear_cache_on_startup()
 
 # Load submissions data on startup
 load_submissions()
@@ -167,6 +195,232 @@ def format_feedback_as_markdown(feedback_text):
             lines[i] = '- ' + rest.strip()
     
     return '\n'.join(lines)
+
+@app.route('/student/<student_id>')
+def student_view(student_id):
+    """Student view with generated feedback and rating mechanism."""
+    # Check if feedback is already in cache or submissions
+    if student_id in feedback_cache:
+        feedback_data = feedback_cache[student_id]
+    elif student_id in submissions:
+        feedback_data = submissions[student_id]
+    else:
+        flash(f'No feedback found for student {student_id}')
+        return redirect(url_for('index'))
+    
+    java_files = feedback_data.get('java_files', {})
+    
+    return render_template(
+        'student_view.html',
+        student_id=student_id,
+        feedback=feedback_data,
+        java_files=java_files
+    )
+
+@app.route('/submit_student_rating/<student_id>', methods=['POST'])
+def submit_student_rating(student_id):
+    """Handle student rating submission."""
+    if student_id not in submissions:
+        flash(f"Student submission {student_id} not found.", "danger")
+        return redirect(url_for('index'))
+    
+    # Get rating from form
+    rating = request.form.get('rating', '0')
+    rating_value = 1.0 if rating == '1' else 0.0
+    
+    # Update submission with student rating
+    submissions[student_id]['student_rating'] = rating_value
+    
+    # Update cache if needed
+    if student_id in feedback_cache:
+        feedback_cache[student_id]['student_rating'] = rating_value
+    
+    # Save submissions
+    save_submissions()
+    
+    # Flash appropriate message
+    if rating_value == 1.0:
+        flash("Thank you for rating the feedback as helpful!", "success")
+    else:
+        flash("Thank you for your feedback. We'll work to improve our feedback.", "info")
+    
+    return redirect(url_for('student_view', student_id=student_id))
+
+@app.route('/instructor/<student_id>')
+def instructor_view(student_id):
+    """Instructor view with chat interface for feedback refinement."""
+    # Check if feedback is already in cache or submissions
+    if student_id in feedback_cache:
+        feedback_data = feedback_cache[student_id]
+    elif student_id in submissions:
+        feedback_data = submissions[student_id]
+    else:
+        flash(f'No feedback found for student {student_id}')
+        return redirect(url_for('index'))
+    
+    java_files = feedback_data.get('java_files', {})
+    
+    # Calculate feedback quality metrics if not already present
+    if not feedback_data.get('feedback_evaluation'):
+        evaluator = FeedbackEvaluation()
+        generated_feedback = feedback_data.get('generated_feedback', '')
+        instructor_feedback = feedback_data.get('instructor_feedback', '')
+        
+        # Only perform full evaluation if instructor feedback exists
+        if instructor_feedback:
+            evaluation_results = evaluator.evaluate_feedback_quality(generated_feedback, instructor_feedback)
+        else:
+            # Basic evaluation without alignment scores
+            evaluation_results = {
+                "relevance": evaluator._evaluate_relevance(generated_feedback),
+                "specificity": evaluator._evaluate_specificity(generated_feedback),
+                "clarity": evaluator._evaluate_clarity(generated_feedback),
+                "actionability": evaluator._evaluate_actionability(generated_feedback),
+                "alignment_scores": {
+                    "rouge": {"rouge-1-f": 0.0, "rouge-2-f": 0.0, "rouge-l-f": 0.0},
+                    "bert_score": 0.0,
+                    "bleu_score": 0.0
+                },
+                "overall_score": 0.0
+            }
+        
+        feedback_data['feedback_evaluation'] = evaluation_results
+        
+        # Update cache and save submissions
+        if student_id in feedback_cache:
+            feedback_cache[student_id] = feedback_data
+        submissions[student_id] = feedback_data
+        save_submissions()
+    
+    return render_template(
+        'instructor_view.html',
+        student_id=student_id,
+        feedback=feedback_data,
+        java_files=java_files
+    )
+
+@app.route('/submit_instructor_message/<student_id>', methods=['POST'])
+def submit_instructor_message(student_id):
+    """Handle instructor messages in the chat interface."""
+    try:
+        if student_id not in submissions:
+            return jsonify({"success": False, "error": "Student submission not found"})
+        
+        # Directly get message from form data to avoid any automatic stripping
+        message = request.form.get('message')
+        
+        # Safety check for empty messages
+        if message is None or message.strip() == '':
+            return jsonify({"success": False, "error": "Message cannot be empty"})
+        
+        # Get submission data
+        submission = submissions[student_id]
+        
+        # Initialize chat history if not exists
+        if 'chat_history' not in submission:
+            submission['chat_history'] = []
+        
+        # Add instructor message to chat history
+        timestamp = datetime.now().strftime('%H:%M')
+        submission['chat_history'].append({
+            'sender': 'instructor',
+            'content': message,
+            'timestamp': timestamp
+        })
+        
+        # Generate AI response
+        ai_response = generate_ai_response(student_id, message, submission)
+        
+        # Add AI response to chat history
+        submission['chat_history'].append({
+            'sender': 'ai',
+            'content': ai_response,
+            'timestamp': timestamp
+        })
+        
+        # Update cache if needed
+        if student_id in feedback_cache:
+            feedback_cache[student_id] = submission
+        
+        # Save submissions
+        save_submissions()
+        
+        # Return success response
+        return jsonify({
+            "success": True,
+            "response": ai_response
+        })
+    
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)})
+
+def generate_ai_response(student_id, instructor_message, submission):
+    """Generate AI response based on instructor message and context."""
+    try:
+        # Import the reinforcement learning module
+        from reinforcement import FeedbackReinforcementLearning
+        rl = FeedbackReinforcementLearning()
+        
+        # Get the original code
+        java_files = submission.get('java_files', {})
+        combined_code = ""
+        for file_path, content in java_files.items():
+            combined_code += f"// {file_path}\n{content}\n\n"
+        
+        # Get the original feedback
+        original_feedback = submission.get('generated_feedback', '')
+        
+        # Get detected violations
+        detected_violations = submission.get('detected_violations', [])
+        
+        # Build a context string based on current conversation
+        chat_context = "Previous conversation:\n"
+        for msg in submission.get('chat_history', [])[:-1]:  # Exclude the most recent instructor message
+            sender = "Instructor" if msg['sender'] == 'instructor' else "AI"
+            chat_context += f"{sender}: {msg['content']}\n\n"
+        
+        # Add the current message
+        chat_context += f"Instructor: {instructor_message}\n"
+        
+        # Create a prompt for the RL model
+        system_prompt = f"""
+        You are an expert Java code reviewer providing feedback on student assignments.
+        
+        The student code has been evaluated and you already provided initial feedback.
+        
+        Here's the context:
+        
+        ORIGINAL FEEDBACK:
+        {original_feedback}
+        
+        {chat_context}
+        
+        Respond to the instructor's message, focusing on their specific question or request.
+        If they're asking about specific code elements, reference the relevant parts of the code.
+        If they want to improve or modify the feedback, suggest concrete improvements.
+        
+        Keep your response concise, informative, and focused on the instructor's query.
+        """
+        
+        # Generate response using Ollama
+        try:
+            response = rl.ollama_client.generate(
+                model=rl.config["ollama_model"],
+                prompt=system_prompt
+            )
+            return response['response'].strip()
+        except Exception as e:
+            print(f"Error generating AI response with Ollama: {e}")
+            # Fallback response if Ollama fails
+            return "I apologize, but I'm having trouble processing your request right now. Could you please try again or rephrase your question?"
+    
+    except Exception as e:
+        print(f"Error in generate_ai_response: {e}")
+        import traceback
+        traceback.print_exc()
+        return "An error occurred while generating a response. Please try again later."
 
 @app.route('/view/<student_id>')
 def view_feedback(student_id):
