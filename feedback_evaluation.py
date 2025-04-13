@@ -192,6 +192,12 @@ class FeedbackEvaluation:
         else:
             instructor_text = instructor_feedback
         
+        # Strip leading/trailing whitespace to avoid issues
+        if generated_text:
+            generated_text = generated_text.strip()
+        if instructor_text:
+            instructor_text = instructor_text.strip()
+        
         # Add debugging to check text values
         print(f"Generated text length: {len(generated_text) if generated_text else 0}")
         print(f"Instructor text length: {len(instructor_text) if instructor_text else 0}")
@@ -226,6 +232,8 @@ class FeedbackEvaluation:
                 }
             except Exception as e:
                 print(f"Error calculating ROUGE scores: {e}")
+                import traceback
+                traceback.print_exc()
             
             # BERTScore
             try:
@@ -233,13 +241,22 @@ class FeedbackEvaluation:
                 print(f"BERT score: {bert_score}")
             except Exception as e:
                 print(f"Error calculating BERT score: {e}")
+                import traceback
+                traceback.print_exc()
             
             # BLEU score
             try:
                 bleu_score = self.calculate_bleu_score(generated_text, instructor_text)
                 print(f"BLEU score: {bleu_score}")
+                
+                # Handle extremely small BLEU scores (scientific notation) by setting to 0
+                if bleu_score < 1e-10:
+                    print("BLEU score too small, setting to 0")
+                    bleu_score = 0.0
             except Exception as e:
                 print(f"Error calculating BLEU score: {e}")
+                import traceback
+                traceback.print_exc()
         else:
             print("No valid instructor feedback available for alignment scoring")
         

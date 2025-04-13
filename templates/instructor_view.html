@@ -4,7 +4,7 @@
     <title>Instructor Feedback Interface - {{ student_id }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/feedback.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/instructor_view.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/instructor_view.css') }}" rel="stylesheet">
 </head>
 <body>
@@ -14,12 +14,14 @@
             <div class="col-12 chat-section">
                 <div class="chat-header">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h3>Instructor Feedback - {{ student_id }}</h3>
+                        <div class="d-flex align-items-center">
+                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary me-3">Back</a>
+                            <h3>Instructor Feedback - {{ student_id }}</h3>
+                        </div>
                         <div>
-                            <button class="btn btn-info me-2" type="button" data-bs-toggle="modal" data-bs-target="#feedbackQualityModal">
+                            <button class="btn btn-info" type="button" data-bs-toggle="modal" data-bs-target="#feedbackQualityModal">
                                 <i class="bi bi-bar-chart-fill"></i> Feedback Metrics
                             </button>
-                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Back</a>
                         </div>
                     </div>
                 </div>
@@ -65,7 +67,7 @@
                     <div class="chat-input">
                         <form id="chatForm" action="{{ url_for('submit_instructor_message', student_id=student_id) }}" method="post">
                             <div class="input-group">
-                                <textarea class="form-control" id="messageInput" name="message" placeholder="Type your message..." rows="2" required></textarea>
+                                <textarea class="form-control" id="messageInput" name="message" placeholder="Type your message..." rows="2"></textarea>
                                 <button class="btn btn-primary" type="submit" id="sendButton">
                                     <i class="bi bi-send"></i> Send
                                 </button>
@@ -87,15 +89,15 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- Content Quality Metrics -->
+                    <!-- Content Quality Section -->
                     <div class="card mb-3">
                         <div class="card-header">Content Quality</div>
                         <div class="card-body">
                             <div class="row">
-                                {% if feedback.quality_metrics %}
                                 <div class="col-md-6">
                                     <h6 class="text-center">Basic Metrics</h6>
                                     <div class="progress-metrics">
+                                        {% if feedback.quality_metrics %}
                                         <div class="metric-row">
                                             <span class="metric-label">Specificity:</span>
                                             <div class="progress">
@@ -124,14 +126,16 @@
                                             </div>
                                             <span class="metric-value">{{ (feedback.quality_metrics.completeness * 100)|round|int }}%</span>
                                         </div>
+                                        {% else %}
+                                        <div class="alert alert-info">No quality metrics available</div>
+                                        {% endif %}
                                     </div>
                                 </div>
-                                {% endif %}
                                 
-                                {% if feedback.feedback_evaluation %}
                                 <div class="col-md-6">
                                     <h6 class="text-center">Instructor Alignment</h6>
                                     <div class="progress-metrics">
+                                        {% if feedback.feedback_evaluation %}
                                         <div class="metric-row">
                                             <span class="metric-label">Relevance:</span>
                                             <div class="progress">
@@ -160,15 +164,16 @@
                                             </div>
                                             <span class="metric-value">{{ (feedback.feedback_evaluation.actionability * 100)|round|int }}%</span>
                                         </div>
+                                        {% else %}
+                                        <div class="alert alert-info">No alignment metrics available</div>
+                                        {% endif %}
                                     </div>
                                 </div>
-                                {% endif %}
                             </div>
                         </div>
                     </div>
                     
                     <!-- Alignment Scores -->
-                    {% if feedback.feedback_evaluation and feedback.feedback_evaluation.alignment_scores %}
                     <div class="card">
                         <div class="card-header">Alignment Scores</div>
                         <div class="card-body">
@@ -177,11 +182,15 @@
                                     <div class="text-center mb-3">
                                         <h6>ROUGE-L</h6>
                                         <div class="score-circle 
-                                            {% if feedback.feedback_evaluation.alignment_scores.rouge['rouge-l-f'] >= 0.7 %}score-high
-                                            {% elif feedback.feedback_evaluation.alignment_scores.rouge['rouge-l-f'] >= 0.5 %}score-medium
-                                            {% elif feedback.feedback_evaluation.alignment_scores.rouge['rouge-l-f'] >= 0.3 %}score-low
+                                            {% if feedback.feedback_evaluation and feedback.feedback_evaluation.alignment_scores and feedback.feedback_evaluation.alignment_scores.rouge and feedback.feedback_evaluation.alignment_scores.rouge['rouge-l-f'] >= 0.7 %}score-high
+                                            {% elif feedback.feedback_evaluation and feedback.feedback_evaluation.alignment_scores and feedback.feedback_evaluation.alignment_scores.rouge and feedback.feedback_evaluation.alignment_scores.rouge['rouge-l-f'] >= 0.5 %}score-medium
+                                            {% elif feedback.feedback_evaluation and feedback.feedback_evaluation.alignment_scores and feedback.feedback_evaluation.alignment_scores.rouge and feedback.feedback_evaluation.alignment_scores.rouge['rouge-l-f'] >= 0.3 %}score-low
                                             {% else %}score-poor{% endif %}">
-                                            {{ (feedback.feedback_evaluation.alignment_scores.rouge['rouge-l-f'] * 100)|round|int }}%
+                                            {% if feedback.feedback_evaluation and feedback.feedback_evaluation.alignment_scores and feedback.feedback_evaluation.alignment_scores.rouge and 'rouge-l-f' in feedback.feedback_evaluation.alignment_scores.rouge %}
+                                                {{ (feedback.feedback_evaluation.alignment_scores.rouge['rouge-l-f'] * 100)|round|int }}%
+                                            {% else %}
+                                                0%
+                                            {% endif %}
                                         </div>
                                         <div class="score-desc">Content overlap with instructor feedback</div>
                                     </div>
@@ -190,11 +199,15 @@
                                     <div class="text-center mb-3">
                                         <h6>BLEU Score</h6>
                                         <div class="score-circle 
-                                            {% if feedback.feedback_evaluation.alignment_scores.bleu_score >= 0.7 %}score-high
-                                            {% elif feedback.feedback_evaluation.alignment_scores.bleu_score >= 0.5 %}score-medium
-                                            {% elif feedback.feedback_evaluation.alignment_scores.bleu_score >= 0.3 %}score-low
+                                            {% if feedback.feedback_evaluation and feedback.feedback_evaluation.alignment_scores and feedback.feedback_evaluation.alignment_scores.bleu_score >= 0.7 %}score-high
+                                            {% elif feedback.feedback_evaluation and feedback.feedback_evaluation.alignment_scores and feedback.feedback_evaluation.alignment_scores.bleu_score >= 0.5 %}score-medium
+                                            {% elif feedback.feedback_evaluation and feedback.feedback_evaluation.alignment_scores and feedback.feedback_evaluation.alignment_scores.bleu_score >= 0.3 %}score-low
                                             {% else %}score-poor{% endif %}">
-                                            {{ (feedback.feedback_evaluation.alignment_scores.bleu_score * 100)|round|int }}%
+                                            {% if feedback.feedback_evaluation and feedback.feedback_evaluation.alignment_scores and feedback.feedback_evaluation.alignment_scores.bleu_score is defined %}
+                                                {{ (feedback.feedback_evaluation.alignment_scores.bleu_score * 100)|round|int }}%
+                                            {% else %}
+                                                0%
+                                            {% endif %}
                                         </div>
                                         <div class="score-desc">Precision-based alignment with instructor</div>
                                     </div>
@@ -203,17 +216,27 @@
                                     <div class="text-center mb-3">
                                         <h6>BERTScore</h6>
                                         <div class="score-circle 
-                                            {% if feedback.feedback_evaluation.alignment_scores.bert_score >= 0.8 %}score-high
-                                            {% elif feedback.feedback_evaluation.alignment_scores.bert_score >= 0.7 %}score-medium
-                                            {% elif feedback.feedback_evaluation.alignment_scores.bert_score >= 0.6 %}score-low
+                                            {% if feedback.feedback_evaluation and feedback.feedback_evaluation.alignment_scores and feedback.feedback_evaluation.alignment_scores.bert_score >= 0.8 %}score-high
+                                            {% elif feedback.feedback_evaluation and feedback.feedback_evaluation.alignment_scores and feedback.feedback_evaluation.alignment_scores.bert_score >= 0.7 %}score-medium
+                                            {% elif feedback.feedback_evaluation and feedback.feedback_evaluation.alignment_scores and feedback.feedback_evaluation.alignment_scores.bert_score >= 0.6 %}score-low
                                             {% else %}score-poor{% endif %}">
-                                            {{ (feedback.feedback_evaluation.alignment_scores.bert_score * 100)|round|int }}%
+                                            {% if feedback.feedback_evaluation and feedback.feedback_evaluation.alignment_scores and feedback.feedback_evaluation.alignment_scores.bert_score is defined %}
+                                                {{ (feedback.feedback_evaluation.alignment_scores.bert_score * 100)|round|int }}%
+                                            {% else %}
+                                                0%
+                                            {% endif %}
                                         </div>
                                         <div class="score-desc">Semantic similarity with instructor feedback</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- Show status message if no instructor feedback yet -->
+                    {% if not feedback.instructor_feedback %}
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle"></i> No instructor feedback has been provided yet. Alignment scores will be calculated once you provide feedback.
                     </div>
                     {% endif %}
                 </div>

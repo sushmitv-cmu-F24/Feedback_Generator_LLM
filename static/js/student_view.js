@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup rating buttons
     setupRatingButtons();
+    
+    // Setup code tabs
+    setupCodeTabs();
 });
 
 /**
@@ -15,10 +18,12 @@ function initializeMarkdown() {
     const markdownElements = document.querySelectorAll('.markdown-content');
     
     marked.setOptions({
-        breaks: true,
-        gfm: true,
-        headerIds: false,
-        mangle: false
+        breaks: true,         // Add line breaks on single newlines
+        gfm: true,            // GitHub Flavored Markdown
+        headerIds: false,     // Don't add ids to headers
+        mangle: false,        // Don't mangle email addresses
+        smartLists: true,     // Use smarter list behavior
+        smartypants: true     // Use smart punctuation
     });
     
     markdownElements.forEach(function(element) {
@@ -57,6 +62,52 @@ function setupRatingButtons() {
                 // Set rating value and submit
                 ratingInput.value = '0';
                 ratingForm.submit();
+            }
+        });
+    }
+}
+
+/**
+ * Setup code tabs
+ */
+function setupCodeTabs() {
+    const codeTabs = document.querySelectorAll('#codeTabs button');
+    
+    codeTabs.forEach(function(tab) {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all tabs
+            codeTabs.forEach(function(t) {
+                t.classList.remove('active');
+                
+                // Hide tab content
+                const target = document.querySelector(t.dataset.bsTarget);
+                if (target) {
+                    target.classList.remove('show');
+                    target.classList.remove('active');
+                }
+            });
+            
+            // Add active class to clicked tab
+            this.classList.add('active');
+            
+            // Show tab content
+            const target = document.querySelector(this.dataset.bsTarget);
+            if (target) {
+                target.classList.add('show');
+                target.classList.add('active');
+            }
+        });
+    });
+    
+    // Initialize collapse for code section
+    const codeToggle = document.querySelector('[data-bs-toggle="collapse"]');
+    if (codeToggle) {
+        codeToggle.addEventListener('click', function() {
+            const target = document.querySelector(this.dataset.bsTarget);
+            if (target) {
+                target.classList.toggle('show');
             }
         });
     }

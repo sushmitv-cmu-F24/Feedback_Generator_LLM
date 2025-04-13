@@ -4,6 +4,7 @@ from nltk.tokenize import sent_tokenize
 from nltk.corpus import stopwords
 import numpy as np
 from collections import Counter
+from flask import json
 
 # Download NLTK resources
 try:
