@@ -105,6 +105,11 @@ python evaluation_phase.py path/to/submission.zip
 
 ## Next Steps
 
-1. Optimize the evaluation process
-2. Fine tune the model for feedback generation
-3. Dockerize and deploy the service
+1. Use the latest generated feedback in chat and add it to processed_data.json. This will act as context for the LLM while generating more outputs.
+QQ: If I add this to the processed_data.json file, then it becomes a data leak if ever in future I generate output for this submission?
+Soln: Once the app starts replace current processed_data.json with backup. (Backup and main are same for first run)
+Add latest feedback in processed_data.json corresponding to the student which acts as context for future submissions. 
+2. Update the bar in metrics displayed, use most similar feedback for calculating ROUGE, BLEU and BERTScores.
+3. Update the RIL Dashboard.
+4. Update index page UI.
+5. Add the second task as well to this app.

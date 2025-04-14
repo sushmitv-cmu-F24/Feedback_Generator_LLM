@@ -1,5 +1,6 @@
 import os
 import json
+import shutil
 import base64
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
@@ -65,7 +66,410 @@ def load_submissions():
         if student_id not in submissions:
             submissions[student_id] = data
 
-# Add a new function to clear cache and reset submissions
+# Replace processed_data.json from backup on startup to avoid data leakage
+def reset_processed_data():
+    """Reset processed_data.json from processed_data_backup.json at application startup."""
+    try:
+        backup_file = os.path.join('data', 'processed_data_backup.json')
+        processed_file = os.path.join('data', 'processed_data.json')
+        
+        if os.path.exists(backup_file):
+            # Simply copy the backup file to processed_data.json
+            shutil.copy2(backup_file, processed_file)
+            print("✅ Reset processed_data.json from backup file")
+        else:
+            print("⚠️ Backup file (processed_data_backup.json) not found. Creating empty processed_data.json.")
+            # Create an empty processed_data.json
+            with open(processed_file, 'w') as f:
+                json.dump({}, f)
+    except Exception as e:
+        print(f"⚠️ Error resetting processed data: {e}")
+        import traceback
+        traceback.print_exc()
+
+def update_processed_data(student_id, evaluation_result):
+    """
+    Add newly generated feedback to processed_data.json with the same structure as existing entries,
+    and update the FAISS index for similarity matching.
+    """
+    try:
+        # Import necessary functions from training_phase.py and evaluation_phase.py
+        from training_phase import analyze_sentiment, categorize_solid_violations, parse_java_code, extract_package_structure
+        from evaluation_phase import extract_solid_violations_from_feedback
+        
+        processed_file = os.path.join('data', 'processed_data.json')
+        
+        # Load current processed data
+        if os.path.exists(processed_file):
+            with open(processed_file, 'r') as f:
+                processed_data = json.load(f)
+        else:
+            processed_data = {}
+        
+        # Extract feedback text
+        feedback_text = evaluation_result.get('generated_feedback', '')
+        java_files = evaluation_result.get('java_files', {})
+        
+        # Divide feedback into structured sections like in other entries
+        feedback_sections = extract_feedback_sections(feedback_text)
+        
+        # Parse all Java files for class structure
+        parsed_classes = {}
+        for file_path, content in java_files.items():
+            file_parsed_classes = parse_java_code(content)
+            parsed_classes.update(file_parsed_classes)
+        
+        # Extract package structure
+        package_structure, class_packages = extract_package_structure(java_files)
+        
+        # Extract SOLID violations using function from training_phase.py
+        solid_violations = categorize_solid_violations(feedback_text)
+        
+        # Analyze sentiment
+        sentiment_label, sentiment_score = analyze_sentiment(feedback_text)
+        
+        # Get the detected violations in the same format as training_phase.py
+        detected_violations = {
+            "solid": [],
+            "package": [],
+            "dependency_injection": []
+        }
+        
+        # Map the flat list of violations from evaluation_result to the categorized structure
+        for violation in evaluation_result.get('detected_violations', []):
+            principle = violation.get('principle', '')
+            if principle in ['SRP', 'OCP', 'LSP', 'ISP', 'DIP']:
+                detected_violations["solid"].append({
+                    "principle": principle,
+                    "class": violation.get('location', ''),
+                    "reason": violation.get('description', '')
+                })
+            elif principle == 'package_structure':
+                detected_violations["package"].append({
+                    "type": "package_structure",
+                    "description": violation.get('description', '')
+                })
+            elif principle == 'dependency_injection':
+                detected_violations["dependency_injection"].append({
+                    "type": "dependency_injection", 
+                    "description": violation.get('description', '')
+                })
+        
+        # Structure the entry to fully match the format in processed_data.json
+        processed_data[student_id] = {
+            "feedback": feedback_sections,  # Use the divided feedback sections
+            "java_files": java_files,
+            "parsed_classes": parsed_classes,
+            "package_structure": package_structure,
+            "solid_violations": solid_violations,
+            "detected_violations": detected_violations,
+            "sentiment": {"label": sentiment_label, "score": sentiment_score}
+        }
+        
+        # Save the updated data
+        with open(processed_file, 'w') as f:
+            json.dump(processed_data, f, indent=4)
+        
+        print(f"✅ Updated processed_data.json with complete feedback entry for {student_id}")
+        
+        # Update the FAISS index with the new feedback
+        update_faiss_index(student_id, evaluation_result)
+        
+        return True
+    except Exception as e:
+        print(f"⚠️ Error updating processed data: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+def reset_faiss_index_files():
+    """Reset FAISS index files from backup at application startup."""
+    try:
+        # Files to reset
+        faiss_file = "./data/feedback_embeddings.faiss"
+        mapping_file = "./data/feedback_embeddings.faiss.json"
+        
+        # Backup files
+        faiss_backup = "./data/feedback_embeddings_backup.faiss"
+        mapping_backup = "./data/feedback_embeddings_backup.faiss.json"
+        
+        # Reset FAISS index if backup exists
+        if os.path.exists(faiss_backup) and os.path.exists(mapping_backup):
+            # Copy backup files to original locations
+            shutil.copy2(faiss_backup, faiss_file)
+            shutil.copy2(mapping_backup, mapping_file)
+            
+            print("✅ Reset FAISS index files from backups")
+            
+            # Reload the FAISS index in memory
+            reload_faiss_index()
+        else:
+            print("⚠️ FAISS backup files not found. Index will not be reset.")
+    except Exception as e:
+        print(f"⚠️ Error resetting FAISS index files: {e}")
+        import traceback
+        traceback.print_exc()
+
+# Add the extract_feedback_sections function from training_phase.py
+def extract_feedback_sections(feedback_text):
+    """Breaks feedback into structured categories: general_comments, solid_violations, and suggestions."""
+    if not feedback_text:
+        return {"general_comments": None, "solid_violations": None, "suggestions": None}
+    
+    # Try to identify sections based on common headers in the feedback
+    sections = {"general_comments": None, "solid_violations": None, "suggestions": None}
+    
+    # Split the feedback into sections based on markdown headers
+    parts = re.split(r'## ', feedback_text)
+    
+    # The first part is likely the overall assessment (general comments)
+    if parts and len(parts) > 0:
+        sections["general_comments"] = parts[0].strip()
+    
+    # Look for sections with specific keywords
+    for part in parts:
+        part = part.strip()
+        if part.startswith("Overall Assessment") or part.startswith("Assessment"):
+            sections["general_comments"] = part
+        elif part.startswith("SOLID Violations") or part.startswith("Violations"):
+            sections["solid_violations"] = part
+        elif part.startswith("Improvement Suggestions") or part.startswith("Suggestions"):
+            sections["suggestions"] = part
+    
+    # If we couldn't identify clear sections, use the whole text as general_comments
+    if not any(sections.values()):
+        sections["general_comments"] = feedback_text
+    
+    # Clean the text and remove section headers
+    for key in sections:
+        if sections[key]:
+            sections[key] = re.sub(r'^(Overall Assessment|SOLID Violations|Improvement Suggestions)[\s:]*', '', sections[key]).strip()
+    
+    return sections
+
+def update_faiss_index(student_id, evaluation_result):
+    """
+    Update the FAISS index with the embedding for newly generated feedback.
+    
+    Args:
+        student_id: The student ID for the new feedback
+        evaluation_result: The evaluation result containing feedback and Java files
+    """
+    try:
+        import faiss
+        import numpy as np
+        from evaluation_phase import get_submission_embedding
+        from training_phase import parse_java_code
+        
+        # Check if the FAISS index exists
+        embeddings_file = "./data/feedback_embeddings.faiss"
+        if not os.path.exists(embeddings_file):
+            print(f"⚠️ FAISS index file not found at {embeddings_file}. Cannot update.")
+            return False
+        
+        # Load the existing index
+        faiss_index = faiss.read_index(embeddings_file)
+        
+        # Load the student ID mapping
+        mapping_file = embeddings_file + ".json"
+        if os.path.exists(mapping_file):
+            with open(mapping_file, "r") as f:
+                student_id_mapping = json.load(f)
+        else:
+            student_id_mapping = []
+        
+        # Get Java files
+        java_files = evaluation_result.get('java_files', {})
+        
+        # Parse Java files for class structure in the format expected by get_submission_embedding
+        parsed_classes = {}
+        for file_path, content in java_files.items():
+            file_parsed = parse_java_code(content)
+            if file_parsed:  # Only add if parsing was successful
+                parsed_classes[file_path] = file_parsed
+        
+        # Generate the embedding
+        # Note: get_submission_embedding expects parsed_classes in a format where
+        # keys are file paths and values are dictionaries of class info
+        embedding = get_submission_embedding(java_files, parsed_classes)
+        
+        # Add the embedding to the FAISS index
+        faiss_index.add(embedding)
+        
+        # Update the student ID mapping
+        student_id_mapping.append(student_id)
+        
+        # Save the updated index and mapping
+        faiss.write_index(faiss_index, embeddings_file)
+        with open(mapping_file, "w") as f:
+            json.dump(student_id_mapping, f)
+        
+        print(f"✅ Updated FAISS index with embedding for {student_id}")
+        return True
+    except Exception as e:
+        print(f"⚠️ Error updating FAISS index: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+def reload_faiss_index():
+    """
+    Reload the FAISS index to ensure we're using the most up-to-date version.
+    This should be called before searching for similar submissions.
+    """
+    try:
+        import faiss
+        
+        # Path to the FAISS index file
+        embeddings_file = "./data/feedback_embeddings.faiss"
+        
+        # Check if the file exists
+        if not os.path.exists(embeddings_file):
+            print(f"⚠️ FAISS index file not found at {embeddings_file}. Cannot reload.")
+            return False
+        
+        # Import the FAISS variables from evaluation_phase.py
+        import evaluation_phase
+        
+        # Reload the FAISS index
+        evaluation_phase.faiss_index = faiss.read_index(embeddings_file)
+        
+        # Reload the student ID mapping
+        mapping_file = embeddings_file + ".json"
+        if os.path.exists(mapping_file):
+            with open(mapping_file, "r") as f:
+                evaluation_phase.student_id_mapping = json.load(f)
+                
+        print(f"✅ Reloaded FAISS index with {evaluation_phase.faiss_index.ntotal} vectors")
+        return True
+    except Exception as e:
+        print(f"⚠️ Error reloading FAISS index: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+def update_processed_data_with_ril(student_id, instructor_feedback):
+    """
+    Update the feedback portion in processed_data.json when instructor provides feedback via RIL.
+    Preserves all other metadata while replacing just the feedback.
+    
+    Args:
+        student_id: The student ID for the feedback
+        instructor_feedback: The new feedback text from instructor
+    """
+    try:
+        # Path to processed data file
+        processed_file = os.path.join('data', 'processed_data.json')
+        
+        # Check if file exists
+        if not os.path.exists(processed_file):
+            print(f"⚠️ Processed data file not found at {processed_file}")
+            return False
+        
+        # Load current processed data
+        with open(processed_file, 'r') as f:
+            processed_data = json.load(f)
+        
+        # Check if student entry exists
+        if student_id not in processed_data:
+            print(f"⚠️ No entry found for student {student_id} in processed data")
+            return False
+        
+        # Get the existing entry to preserve metadata
+        student_entry = processed_data[student_id]
+        
+        # Extract feedback sections from the new feedback
+        feedback_sections = extract_feedback_sections(instructor_feedback)
+        
+        # Update just the feedback portion
+        student_entry['feedback'] = feedback_sections
+        
+        # Re-analyze SOLID violations if needed
+        from training_phase import categorize_solid_violations
+        solid_violations = categorize_solid_violations(instructor_feedback)
+        student_entry['solid_violations'] = solid_violations
+        
+        # Save the updated data
+        with open(processed_file, 'w') as f:
+            json.dump(processed_data, f, indent=4)
+        
+        print(f"✅ Updated processed_data.json with new RIL feedback for {student_id}")
+        return True
+    except Exception as e:
+        print(f"⚠️ Error updating processed data with RIL feedback: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+def format_ril_feedback(original_feedback, instructor_message, ai_response):
+    """
+    Format the RIL feedback to maintain the same structure as the original feedback.
+    
+    Args:
+        original_feedback: The original feedback structure
+        instructor_message: The message from the instructor
+        ai_response: The AI's response to the instructor
+        
+    Returns:
+        A formatted feedback text that maintains the original structure
+    """
+    try:
+        # Check if original feedback is a dictionary
+        if isinstance(original_feedback, dict):
+            # Extract sections from original feedback
+            general_comments = original_feedback.get('general_comments', '')
+            solid_violations = original_feedback.get('solid_violations', '')
+            suggestions = original_feedback.get('suggestions', '')
+            
+            # Analyze instructor message to determine which section they want to update
+            instructor_msg_lower = instructor_message.lower()
+            
+            # Check for keywords to determine which section to update
+            update_general = any(keyword in instructor_msg_lower for keyword in 
+                               ['overall', 'assessment', 'general', 'introduction'])
+            update_violations = any(keyword in instructor_msg_lower for keyword in 
+                                  ['violation', 'solid', 'principle', 'srp', 'ocp', 'lsp', 'isp', 'dip'])
+            update_suggestions = any(keyword in instructor_msg_lower for keyword in 
+                                   ['suggestion', 'recommend', 'improvement', 'fix', 'solution'])
+            
+            # If no specific section is mentioned, determine based on content
+            if not any([update_general, update_violations, update_suggestions]):
+                # Extract sections from AI response
+                ai_sections = extract_feedback_sections(ai_response)
+                
+                # If AI response has clear sections, use those
+                if ai_sections.get('general_comments'):
+                    general_comments = ai_sections.get('general_comments')
+                if ai_sections.get('solid_violations'):
+                    solid_violations = ai_sections.get('solid_violations')
+                if ai_sections.get('suggestions'):
+                    suggestions = ai_sections.get('suggestions')
+            else:
+                # Update specific sections based on instructor message
+                if update_general:
+                    general_comments = ai_response
+                elif update_violations:
+                    solid_violations = ai_response
+                elif update_suggestions:
+                    suggestions = ai_response
+            
+            # Format the feedback in the same structure as the original
+            formatted_feedback = ""
+            if general_comments:
+                formatted_feedback += f"## Overall Assessment\n{general_comments}\n\n"
+            if solid_violations:
+                formatted_feedback += f"## SOLID Violations\n{solid_violations}\n\n"
+            if suggestions:
+                formatted_feedback += f"## Improvement Suggestions\n{suggestions}\n\n"
+            
+            return formatted_feedback
+        else:
+            # If original_feedback is not a dictionary, just return the AI response
+            return ai_response
+    except Exception as e:
+        print(f"⚠️ Error formatting RIL feedback: {e}")
+        return ai_response  # Return AI response as fallback
+
 def clear_cache_on_startup():
     """Clear cached feedback and reset submissions on application startup."""
     global feedback_cache, submissions
@@ -84,6 +488,12 @@ def clear_cache_on_startup():
             print("✅ Cache and submissions data cleared on startup")
         except Exception as e:
             print(f"⚠️ Error clearing submissions data: {e}")
+    
+    # Reset processed_data.json from backup
+    reset_processed_data()
+
+    # Reset FAISS index files from backup
+    reset_faiss_index_files()
 
 def save_submissions():
     """Save submissions data to disk."""
@@ -230,6 +640,9 @@ def student_view(student_id):
         flash(f'No Java files found in {zip_file}')
         return redirect(url_for('index'))
     
+    # Reload the FAISS index to ensure we have the latest data
+    reload_faiss_index()
+    
     # Generate feedback
     evaluation_result = evaluate_submission(java_files)
     evaluation_result['java_files'] = java_files
@@ -252,6 +665,9 @@ def student_view(student_id):
     
     # Save the updated submissions
     save_submissions()
+    
+    # Update processed_data.json with the new feedback
+    update_processed_data(student_id, evaluation_result)
     
     return render_template(
         'student_view.html',
@@ -427,6 +843,30 @@ def submit_instructor_message(student_id):
             'content': ai_response,
             'timestamp': timestamp
         })
+        
+        # Get original feedback structure
+        original_feedback = None
+        if 'processed_data.json' in app.config:
+            try:
+                with open(app.config['PROCESSED_DATA'], "r") as f:
+                    processed_data = json.load(f)
+                    if student_id in processed_data:
+                        original_feedback = processed_data[student_id].get('feedback')
+            except Exception as e:
+                print(f"Error loading processed data: {e}")
+        
+        # Format RIL feedback to maintain the same structure
+        formatted_feedback = format_ril_feedback(
+            original_feedback or submission.get('feedback', {}),
+            message,
+            ai_response
+        )
+        
+        # Update the feedback with the formatted version
+        submission['formatted_ril_feedback'] = formatted_feedback
+        
+        # Update processed_data.json with the new feedback
+        update_processed_data_with_ril(student_id, formatted_feedback)
         
         # Calculate alignment scores with instructor feedback
         try:
