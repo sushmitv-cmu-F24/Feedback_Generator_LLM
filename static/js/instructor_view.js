@@ -29,6 +29,9 @@ function initializeMarkdown() {
         // First fix common markdown formatting issues
         let content = element.textContent;
         
+        // Trim whitespace around headers
+        content = content.replace(/\s+## /g, '\n## ');
+        
         // Fix header formatting (ensure space after ##)
         content = content.replace(/##(\s*)([A-Za-z])/g, '## $2');
         

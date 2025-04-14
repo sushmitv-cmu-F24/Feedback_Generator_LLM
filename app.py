@@ -1215,55 +1215,90 @@ def generate_ai_response(student_id, instructor_message, submission):
         from reinforcement import FeedbackReinforcementLearning
         rl = FeedbackReinforcementLearning()
         
-        # Get the original code
-        java_files = submission.get('java_files', {})
-        combined_code = ""
-        for file_path, content in java_files.items():
-            combined_code += f"// {file_path}\n{content}\n\n"
-        
         # Get the original feedback
         original_feedback = submission.get('generated_feedback', '')
         
-        # Build a context string based on current conversation
-        chat_context = "Previous conversation:\n"
-        for msg in submission.get('chat_history', [])[:-1]:  # Exclude the most recent instructor message
-            sender = "Instructor" if msg['sender'] == 'instructor' else "AI"
-            chat_context += f"{sender}: {msg['content']}\n\n"
+        # Check if this is a request to remove a specific violation
+        remove_violation = False
+        violation_type = None
         
-        # Add the current message
-        chat_context += f"Instructor: {instructor_message}\n"
+        if "remove" in instructor_message.lower():
+            remove_violation = True
+            # Look for which violation to remove
+            for violation in ["srp", "ocp", "dip", "isp"]:
+                if violation in instructor_message.lower():
+                    violation_type = violation.upper()
+                    break
+            
+            # Look for specific principles
+            if "single responsibility" in instructor_message.lower():
+                violation_type = "SRP"
+            elif "open" in instructor_message.lower() and "closed" in instructor_message.lower():
+                violation_type = "OCP"
+            elif "dependency" in instructor_message.lower() and "inversion" in instructor_message.lower():
+                violation_type = "DIP"
+            elif "interface" in instructor_message.lower() and "segregation" in instructor_message.lower():
+                violation_type = "ISP"
         
-        # Create a prompt for the RL model
+        # Create the prompt
+        instruction_text = ""
+        if remove_violation and violation_type:
+            instruction_text = f"Please completely remove all mention of {violation_type} from the feedback. Delete any bullet points or sections that discuss this principle."
+        else:
+            instruction_text = "Please update the feedback according to the instructor's request."
+        
         system_prompt = f"""
-        You are an expert Java code reviewer providing feedback on student assignments.
-        
-        The student code has been evaluated and you already provided initial feedback.
-        
-        Here's the context:
-        
-        ORIGINAL FEEDBACK:
+        You are an expert Java code reviewer. 
+
+        Here is the current feedback:
+
         {original_feedback}
-        
-        {chat_context}
-        
-        Respond to the instructor's message by generating a new feedback, focusing on their specific question or request.
-        If they're asking about specific code elements, reference the relevant parts of the code.
-        If they want to improve or modify the feedback, suggest concrete improvements.
-        
-        Keep your response in same format as the original feedback including the instructor's suggestion.
+
+        The instructor has requested: "{instructor_message}"
+
+        {instruction_text}
+
+        Return the complete updated feedback with proper markdown formatting. Remember to remove original feedback from the response.
+        Ensure each header has a blank line after it.
         """
         
-        # Generate response using Ollama
         try:
+            # Generate feedback with Ollama
             response = rl.ollama_client.generate(
                 model=rl.config["ollama_model"],
                 prompt=system_prompt
             )
-            return response['response'].strip()
+            
+            feedback_text = response['response'].strip()
+            
+            # Manual post-processing to ensure the first header has a line break
+            feedback_text = re.sub(r'^(## [^\n]+)([^\n])', r'\1\n\n\2', feedback_text)
+            
+            return feedback_text
+            
         except Exception as e:
-            print(f"Error generating AI response with Ollama: {e}")
-            # Fallback response if Ollama fails
-            return "I apologize, but I'm having trouble processing your request right now. Could you please try again or rephrase your question?"
+            print(f"Error generating with Ollama: {e}")
+            # Create a manual response if Ollama fails
+            if remove_violation and violation_type:
+                # Manually remove violation sections
+                lines = original_feedback.split('\n')
+                filtered_lines = []
+                skip_section = False
+                
+                for line in lines:
+                    if violation_type in line:
+                        skip_section = True
+                    elif skip_section and line.startswith('-'):
+                        continue  # Skip bullet points in violation section
+                    elif skip_section and (line.strip() == '' or line.startswith('#')):
+                        skip_section = False
+                    
+                    if not skip_section:
+                        filtered_lines.append(line)
+                
+                return '\n'.join(filtered_lines)
+            else:
+                return "I apologize, but I couldn't process your request. Please try again with more specific instructions."
     
     except Exception as e:
         print(f"Error in generate_ai_response: {e}")
