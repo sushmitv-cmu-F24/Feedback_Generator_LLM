@@ -1,5 +1,3 @@
-// student_view.js
-
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize markdown renderer
     initializeMarkdown();
@@ -50,6 +48,9 @@ function setupRatingButtons() {
                 // Set rating value and submit
                 ratingInput.value = '1';
                 ratingForm.submit();
+                
+                // Show feedback notification
+                showNotification('Thank you for your feedback!', 'success');
             }
         });
         
@@ -62,9 +63,50 @@ function setupRatingButtons() {
                 // Set rating value and submit
                 ratingInput.value = '0';
                 ratingForm.submit();
+                
+                // Show feedback notification
+                showNotification('Thank you for your feedback. We\'ll work to improve.', 'warning');
             }
         });
     }
+}
+
+/**
+ * Show a notification to the user
+ */
+function showNotification(message, type = 'info') {
+    // Check if notification container exists, create if it doesn't
+    let notificationContainer = document.getElementById('notificationContainer');
+    
+    if (!notificationContainer) {
+        notificationContainer = document.createElement('div');
+        notificationContainer.id = 'notificationContainer';
+        notificationContainer.style.position = 'fixed';
+        notificationContainer.style.bottom = '20px';
+        notificationContainer.style.right = '20px';
+        notificationContainer.style.zIndex = '1050';
+        document.body.appendChild(notificationContainer);
+    }
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show`;
+    notification.role = 'alert';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    // Add notification to container
+    notificationContainer.appendChild(notification);
+    
+    // Auto-dismiss after 3 seconds
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            notificationContainer.removeChild(notification);
+        }, 150);
+    }, 3000);
 }
 
 /**

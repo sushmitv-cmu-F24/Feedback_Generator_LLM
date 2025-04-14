@@ -17,6 +17,8 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 from io import BytesIO
+import numpy as np
+import io
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -257,7 +259,6 @@ def update_faiss_index(student_id, evaluation_result):
     """
     try:
         import faiss
-        import numpy as np
         from evaluation_phase import get_submission_embedding
         from training_phase import parse_java_code
         
@@ -739,7 +740,7 @@ def student_view(student_id):
 
 @app.route('/submit_student_rating/<student_id>', methods=['POST'])
 def submit_student_rating(student_id):
-    """Handle student rating submission."""
+    """Handle student rating submission with enhanced data capture for RIL dashboard."""
     if student_id not in submissions:
         flash(f"Student submission {student_id} not found.", "danger")
         return redirect(url_for('index'))
@@ -748,15 +749,53 @@ def submit_student_rating(student_id):
     rating = request.form.get('rating', '0')
     rating_value = 1.0 if rating == '1' else 0.0
     
-    # Update submission with student rating
+    # Add timestamp for tracking when feedback was received
+    submission_date = datetime.now().strftime('%Y-%m-%d')
+    
+    # Update submission with student rating and date
     submissions[student_id]['student_rating'] = rating_value
+    submissions[student_id]['submission_date'] = submission_date
     
     # Update cache if needed
     if student_id in feedback_cache:
         feedback_cache[student_id]['student_rating'] = rating_value
+        feedback_cache[student_id]['submission_date'] = submission_date
     
     # Save submissions
     save_submissions()
+    
+    # Call reinforcement learning to store feedback pair if possible
+    try:
+        if student_id in submissions and 'java_files' in submissions[student_id] and 'generated_feedback' in submissions[student_id]:
+            # Get original code (combine all Java files)
+            java_files = submissions[student_id]['java_files']
+            combined_code = ""
+            for file_path, content in java_files.items():
+                combined_code += f"// {file_path}\n{content}\n\n"
+                
+            # Get generated feedback
+            generated_feedback = submissions[student_id]['generated_feedback']
+            
+            # Store in RL system - using student rating as feedback quality indicator
+            # Note: We pass the same text for model_feedback and instructor_feedback since we're
+            # not using instructor feedback anymore, just student ratings
+            reinforcement.store_feedback_pair(
+                submission_id=student_id,
+                original_code=combined_code,
+                model_feedback=generated_feedback,
+                instructor_feedback=generated_feedback,  # Same as model feedback since we only use student ratings
+                instructor_rating=rating_value,  # Using student rating as the quality indicator
+                feedback_meta={
+                    "rating_type": "student",
+                    "submission_date": submission_date,
+                    "has_alignment_scores": 'feedback_evaluation' in submissions[student_id]
+                }
+            )
+            print(f"✅ Stored feedback with student rating ({rating_value}) for {student_id}")
+    except Exception as e:
+        print(f"⚠️ Error storing feedback pair in RL system: {e}")
+        import traceback
+        traceback.print_exc()
     
     # Flash appropriate message
     if rating_value == 1.0:
@@ -765,6 +804,196 @@ def submit_student_rating(student_id):
         flash("Thank you for your feedback. We'll work to improve our feedback.", "info")
     
     return redirect(url_for('student_view', student_id=student_id))
+
+def process_alignment_scores(submissions_dict):
+    """
+    Process alignment scores from all submissions to prepare data for visualizations.
+    
+    Args:
+        submissions_dict: Dictionary of all submissions
+        
+    Returns:
+        Dictionary with processed alignment data
+    """
+    # Initialize data containers
+    rouge_data = []
+    bleu_data = []
+    bert_data = []
+    
+    # Find submissions with alignment scores
+    for sid, data in submissions_dict.items():
+        if 'feedback_evaluation' in data and 'alignment_scores' in data['feedback_evaluation']:
+            scores = data['feedback_evaluation']['alignment_scores']
+            
+            # Extract ROUGE-L score
+            if 'rouge' in scores and 'rouge-l-f' in scores['rouge']:
+                rouge_score = scores['rouge']['rouge-l-f']
+                rouge_data.append((sid, rouge_score))
+            
+            # Extract BLEU score
+            if 'bleu_score' in scores:
+                bleu_score = scores['bleu_score']
+                bleu_data.append((sid, bleu_score))
+            
+            # Extract BERT score
+            if 'bert_score' in scores:
+                bert_score = scores['bert_score']
+                bert_data.append((sid, bert_score))
+    
+    # Sort data by submission ID for consistency
+    rouge_data.sort(key=lambda x: x[0])
+    bleu_data.sort(key=lambda x: x[0])
+    bert_data.sort(key=lambda x: x[0])
+    
+    return {
+        'rouge_data': rouge_data,
+        'bleu_data': bleu_data,
+        'bert_data': bert_data,
+        'submissions_with_scores': len(set([x[0] for x in rouge_data + bleu_data + bert_data]))
+    }
+
+def calculate_correlation_metrics(submissions_dict):
+    """
+    Calculate correlation between student ratings and alignment scores.
+    
+    Args:
+        submissions_dict: Dictionary of all submissions
+        
+    Returns:
+        Dictionary with correlation data
+    """
+    # Create lists to hold paired data
+    student_ratings = []
+    rouge_scores = []
+    bleu_scores = []
+    bert_scores = []
+    
+    # Find submissions with both student ratings and alignment scores
+    for sid, data in submissions_dict.items():
+        if 'student_rating' in data and 'feedback_evaluation' in data and 'alignment_scores' in data['feedback_evaluation']:
+            student_rating = data['student_rating']
+            scores = data['feedback_evaluation']['alignment_scores']
+            
+            # Add ROUGE-L score pair
+            if 'rouge' in scores and 'rouge-l-f' in scores['rouge']:
+                rouge_score = scores['rouge']['rouge-l-f']
+                student_ratings.append(student_rating)
+                rouge_scores.append(rouge_score)
+            
+            # Add BLEU score pair
+            if 'bleu_score' in scores:
+                bleu_score = scores['bleu_score']
+                bleu_scores.append(bleu_score)
+            
+            # Add BERT score pair
+            if 'bert_score' in scores:
+                bert_score = scores['bert_score']
+                bert_scores.append(bert_score)
+    
+    # Calculate correlations if we have enough data
+    correlations = {}
+    if len(student_ratings) >= 3:
+        try:
+            from scipy.stats import pearsonr
+            
+            # Calculate Pearson correlation
+            if len(rouge_scores) >= 3:
+                correlations['rouge_correlation'] = pearsonr(student_ratings[:len(rouge_scores)], rouge_scores)[0]
+            
+            if len(bleu_scores) >= 3:
+                correlations['bleu_correlation'] = pearsonr(student_ratings[:len(bleu_scores)], bleu_scores)[0]
+            
+            if len(bert_scores) >= 3:
+                correlations['bert_correlation'] = pearsonr(student_ratings[:len(bert_scores)], bert_scores)[0]
+        except Exception as e:
+            print(f"Error calculating correlations: {e}")
+            correlations = {}
+    
+    return {
+        'correlations': correlations,
+        'samples': len(student_ratings)
+    }
+
+def generate_quality_metrics_chart(submissions_dict):
+    """
+    Generate a chart comparing quality metrics (ROUGE-L, BLEU, BERTScore) for submissions.
+    
+    Args:
+        submissions_dict: Dictionary containing all submissions
+        
+    Returns:
+        Tuple of (base64_image_data, has_data_flag)
+    """
+    try:
+        # Process alignment scores
+        alignment_data = process_alignment_scores(submissions_dict)
+        rouge_data = alignment_data['rouge_data']
+        bleu_data = alignment_data['bleu_data']
+        bert_data = alignment_data['bert_data']
+        
+        # Check if we have enough data
+        if not rouge_data and not bleu_data and not bert_data:
+            return None, False
+        
+        # Get all submission IDs
+        all_sids = set([x[0] for x in rouge_data + bleu_data + bert_data])
+        
+        # Simplify submission IDs for display
+        sid_labels = [sid.split('_')[0] if '_' in sid else sid for sid in all_sids]
+        sid_labels = [sid[:10] + '..' if len(sid) > 12 else sid for sid in sid_labels]
+        
+        # Prepare data for each metric
+        metrics_data = {
+            'ROUGE-L': {sid: score for sid, score in rouge_data},
+            'BLEU': {sid: score for sid, score in bleu_data},
+            'BERTScore': {sid: score for sid, score in bert_data}
+        }
+        
+        # Create figure
+        plt.figure(figsize=(10, 6))
+        
+        # Set up bar width and positions
+        bar_width = 0.25
+        x = np.arange(len(all_sids))
+        
+        # Plot bars for each metric
+        colors = ['#4285F4', '#34A853', '#FBBC05']
+        for i, (metric, scores_dict) in enumerate(metrics_data.items()):
+            values = [scores_dict.get(sid, 0) for sid in all_sids]
+            plt.bar(x + (i-1)*bar_width, values, bar_width, label=metric, color=colors[i], alpha=0.8)
+        
+        # Format plot
+        plt.xlabel('Submissions')
+        plt.ylabel('Score')
+        plt.title('Feedback Quality Metrics')
+        plt.xticks(x, sid_labels, rotation=45)
+        plt.ylim(0, 1.1)
+        plt.legend()
+        plt.tight_layout()
+        
+        # Add correlation info if available
+        correlation_info = calculate_correlation_metrics(submissions_dict)
+        if correlation_info['samples'] >= 3 and correlation_info['correlations']:
+            corr_text = "Correlation with student ratings:\n"
+            for metric, corr in correlation_info['correlations'].items():
+                metric_name = metric.split('_')[0].upper()
+                corr_text += f"{metric_name}: {corr:.2f}  "
+            plt.figtext(0.5, 0.01, corr_text, ha='center', fontsize=9, bbox={"facecolor":"lightgray", "alpha":0.5, "pad":5})
+        
+        # Save to base64 string
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png')
+        buffer.seek(0)
+        image_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        plt.close()
+        
+        return image_data, True
+        
+    except Exception as e:
+        print(f"Error generating quality metrics chart: {e}")
+        import traceback
+        traceback.print_exc()
+        return None, False
 
 @app.route('/instructor/<student_id>')
 def instructor_view(student_id):
@@ -1044,68 +1273,238 @@ def generate_ai_response(student_id, instructor_message, submission):
 
 @app.route('/reinforcement_dashboard')
 def reinforcement_dashboard():
-    """Show simplified reinforcement learning dashboard."""
+    """Show reinforcement learning dashboard with student feedback stats and quality metrics."""
     try:
-        # Initialize the reinforcement learning module
-        rl = FeedbackReinforcementLearning()
+        # Get all submissions with feedback
+        submissions_with_feedback = {sid: data for sid, data in submissions.items() 
+                                  if 'student_rating' in data or 'feedback_evaluation' in data}
         
-        # Get learning stats
-        stats = rl.get_learning_stats()
+        # Collect student ratings
+        student_ratings = []
+        thumbs_up_count = 0
+        thumbs_down_count = 0
         
-        # Generate a simple trend chart if we have timestamps and ratings
-        trend_data = None
+        # Collect alignment scores
+        rouge_scores = []
+        bleu_scores = []
+        bert_scores = []
+        
+        # Submission IDs for reference
+        submission_ids = []
+        
+        for sid, data in submissions_with_feedback.items():
+            # Add student rating if available
+            if 'student_rating' in data:
+                rating = data['student_rating']
+                student_ratings.append(rating)
+                
+                # Count thumbs up and down
+                if rating == 1.0:
+                    thumbs_up_count += 1
+                else:
+                    thumbs_down_count += 1
+                    
+                submission_ids.append(sid)
+            
+            # Add alignment scores if available
+            if 'feedback_evaluation' in data and 'alignment_scores' in data['feedback_evaluation']:
+                scores = data['feedback_evaluation']['alignment_scores']
+                
+                # Get ROUGE-L score
+                if 'rouge' in scores and 'rouge-l-f' in scores['rouge']:
+                    rouge_scores.append((sid, scores['rouge']['rouge-l-f']))
+                
+                # Get BLEU score
+                if 'bleu_score' in scores:
+                    bleu_scores.append((sid, scores['bleu_score']))
+                
+                # Get BERT score
+                if 'bert_score' in scores:
+                    bert_scores.append((sid, scores['bert_score']))
+        
+        # Prepare stats dictionary
+        stats = {
+            "status": "success" if student_ratings or rouge_scores else "no_data",
+            "total_samples": len(student_ratings),
+            "thumbs_up_count": thumbs_up_count,
+            "thumbs_down_count": thumbs_down_count,
+            "avg_rating": np.mean(student_ratings) if student_ratings else 0,
+            "ratings": student_ratings
+        }
+        
+        # Generate pie chart for student ratings distribution
+        pie_chart_data = None
         has_trend_data = False
         
-        if stats['status'] == 'success' and len(stats.get('timestamps', [])) > 1:
+        if stats['status'] == 'success' and len(student_ratings) > 0:
             try:
                 import matplotlib
                 matplotlib.use('Agg')  # Use non-interactive backend
                 import matplotlib.pyplot as plt
                 import io
                 import base64
-                from datetime import datetime
                 
-                # Parse timestamps and format for display
-                dates = [datetime.fromisoformat(ts) for ts in stats['timestamps']]
-                formatted_dates = [dt.strftime('%m/%d') for dt in dates]
+                # Create a figure for the pie chart - SMALLER SIZE
+                plt.figure(figsize=(5, 4))
                 
-                # Create a simple figure and plot data
-                plt.figure(figsize=(8, 4))
-                plt.plot(formatted_dates, stats['ratings'], marker='o', linestyle='-', color='#0d6efd')
+                # Data for pie chart
+                labels = ['Helpful', 'Not Helpful']
+                sizes = [thumbs_up_count, thumbs_down_count]
                 
-                # Add moving average
-                if len(stats.get('moving_avg', [])) > 0:
-                    plt.plot(formatted_dates, stats['moving_avg'], linestyle='--', color='#dc3545', label='Average')
+                # Skip if all values are 0
+                if sum(sizes) > 0:
+                    # Custom colors for pie chart
+                    colors = ['#4CAF50', '#F44336']  # Green for helpful, red for not helpful
+                    
+                    # Plot pie chart - simplified style
+                    wedges, texts, autotexts = plt.pie(
+                        sizes, 
+                        labels=None,  # No labels inside the chart
+                        colors=colors, 
+                        autopct='%1.1f%%', 
+                        shadow=False, 
+                        startangle=90,
+                        wedgeprops={'linewidth': 0.5, 'edgecolor': 'white'},
+                        textprops={'fontsize': 12}
+                    )
+                    
+                    # Style the percentage text
+                    for autotext in autotexts:
+                        autotext.set_color('white')
+                        autotext.set_fontsize(12)
+                        autotext.set_fontweight('bold')
+                    
+                    # Add a legend instead of labels on the pie
+                    plt.legend(
+                        labels,
+                        loc="center right",
+                        bbox_to_anchor=(1.15, 0.5),
+                        frameon=False
+                    )
+                    
+                    # Equal aspect ratio ensures that pie is drawn as a circle
+                    plt.axis('equal')
+                    plt.title('Student Feedback Distribution', fontsize=14, pad=10)
+                    plt.tight_layout()
+                    
+                    # Save to base64 string
+                    buffer = io.BytesIO()
+                    plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+                    buffer.seek(0)
+                    pie_chart_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                    plt.close()
+                    
+                    has_trend_data = True
+            except Exception as e:
+                print(f"Error generating pie chart: {e}")
+                import traceback
+                traceback.print_exc()
+        
+        # Generate line graph for quality metrics
+        quality_chart_data = None
+        has_quality_data = False
+        
+        if rouge_scores or bleu_scores or bert_scores:
+            try:
+                # Create figure for line graph
+                plt.figure(figsize=(10, 6))
+                
+                # Get all unique submission IDs
+                all_sids = sorted(set([x[0] for x in rouge_scores + bleu_scores + bert_scores]))
+                
+                # Simplify submission IDs for display
+                sid_labels = [sid.split('_')[0] if '_' in sid else sid for sid in all_sids]
+                sid_labels = [sid[:12] if len(sid) > 12 else sid for sid in sid_labels]
+                
+                # Prepare x-axis positions
+                x = np.arange(len(all_sids))
+                
+                # Prepare data for each metric as lines
+                rouge_values = [dict(rouge_scores).get(sid, 0) for sid in all_sids]
+                bleu_values = [dict(bleu_scores).get(sid, 0) for sid in all_sids]
+                bert_values = [dict(bert_scores).get(sid, 0) for sid in all_sids]
+                
+                # Plot lines for each metric with markers
+                if rouge_values:
+                    plt.plot(x, rouge_values, 'o-', label='ROUGE-L', color='#4285F4', linewidth=2, markersize=8)
+                if bleu_values:
+                    plt.plot(x, bleu_values, 's-', label='BLEU', color='#34A853', linewidth=2, markersize=8)
+                if bert_values:
+                    plt.plot(x, bert_values, '^-', label='BERTScore', color='#FBBC05', linewidth=2, markersize=8)
                 
                 # Format plot
-                plt.xlabel('Date')
-                plt.ylabel('Rating')
-                plt.title('Feedback Ratings')
+                plt.xlabel('Submissions', fontsize=12, fontweight='bold')
+                plt.ylabel('Score', fontsize=12, fontweight='bold')
+                plt.title('Feedback Quality Metrics', fontsize=16, fontweight='bold', pad=20)
+                plt.xticks(x, sid_labels, rotation=45)
+                plt.yticks(np.arange(0, 1.1, 0.1))
+                plt.ylim(0, 1.05)
                 plt.grid(True, linestyle='--', alpha=0.7)
-                plt.ylim(0, 1.1)
-                plt.legend()
+                plt.legend(fontsize=12)
+                
+                # Add light background grid
+                plt.grid(True, linestyle='--', alpha=0.3)
+                
+                # Tight layout
+                plt.tight_layout()
                 
                 # Save to base64 string
                 buffer = io.BytesIO()
-                plt.savefig(buffer, format='png')
+                plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
                 buffer.seek(0)
-                trend_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                quality_chart_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
                 plt.close()
                 
-                has_trend_data = True
+                has_quality_data = True
             except Exception as e:
-                print(f"Error generating trend chart: {e}")
+                print(f"Error generating quality metrics chart: {e}")
+                import traceback
+                traceback.print_exc()
         
         return render_template('reinforcement_dashboard.html', 
                               stats=stats,
                               has_trend_data=has_trend_data,
-                              trend_data=trend_data)
+                              pie_chart_data=pie_chart_data,
+                              has_quality_data=has_quality_data,
+                              quality_chart_data=quality_chart_data)
     
     except Exception as e:
         import traceback
         traceback.print_exc()
         flash(f"Error loading reinforcement dashboard: {str(e)}", "danger")
         return redirect(url_for('index'))
+
+# Helper functions for dashboard
+def calculate_moving_average(values, window_size=2):
+    """Calculate moving average for values."""
+    if len(values) < window_size:
+        return values
+    
+    result = []
+    for i in range(len(values) - window_size + 1):
+        window = values[i:i+window_size]
+        result.append(sum(window) / len(window))
+    return result
+
+def get_trend(values):
+    """Determine trend (improving, declining, stable) from values."""
+    if len(values) < 2:
+        return "stable"
+    
+    # Get first and last values for comparison
+    first_values = values[:min(3, len(values))]  # First up to 3 values
+    last_values = values[-min(3, len(values)):]  # Last up to 3 values
+    
+    first_avg = sum(first_values) / len(first_values)
+    last_avg = sum(last_values) / len(last_values)
+    
+    # Determine trend based on difference
+    if last_avg > first_avg + 0.1:  # 10% improvement
+        return "improving"
+    elif last_avg < first_avg - 0.1:  # 10% decline
+        return "declining"
+    else:
+        return "stable"
 
 @app.context_processor
 def inject_now():

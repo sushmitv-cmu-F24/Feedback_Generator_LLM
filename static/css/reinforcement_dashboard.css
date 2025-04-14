@@ -2,29 +2,55 @@
 
 /* Stat cards */
 .stat-card {
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
     transition: all 0.3s ease;
     border-left: 4px solid #0d6efd;
-    margin-bottom: 1rem;
-}
-
-.stat-card:hover {
+    margin-bottom: 1.5rem;
     box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
 }
 
-/* Progress indicators */
-.progress-tall {
-    height: 25px;
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 
-.progress-label {
-    position: absolute;
-    width: 100%;
-    text-align: center;
+.stat-card .card-header {
+    background-color: #0d6efd;
     color: white;
-    font-weight: bold;
-    line-height: 25px;
-    z-index: 1;
+    font-weight: 600;
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+    padding: 0.75rem 1.25rem;
+}
+
+.stat-card .bg-info {
+    background-color: #17a2b8 !important;
+}
+
+.stat-card .bg-success {
+    background-color: #28a745 !important;
+}
+
+/* Card styling */
+.card {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+    border: none;
+}
+
+.card-header {
+    font-weight: 600;
+    padding: 0.75rem 1.25rem;
+}
+
+.card .bg-primary {
+    background-color: #0d6efd !important;
+}
+
+.card .bg-success {
+    background-color: #28a745 !important;
 }
 
 /* Trend visualization */
@@ -32,26 +58,48 @@
     padding: 1rem;
     background-color: white;
     border-radius: 0.5rem;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
+    text-align: center;
 }
 
 .trend-image {
     max-width: 100%;
     height: auto;
+    border-radius: 0.5rem;
+    margin: 0 auto;
+    display: block;
+}
+
+/* List styling */
+.list-group-item {
+    padding: 0.75rem 1.25rem;
+    border-left: none;
+    border-right: none;
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+.list-group-item:first-child {
+    border-top: none;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* Badges */
+.badge {
+    font-size: 0.85rem;
+    padding: 0.4em 0.65em;
+    font-weight: 600;
     border-radius: 0.25rem;
 }
 
 /* Alert styling */
-.alert-success {
-    background-color: rgba(40, 167, 69, 0.15);
-    border-color: rgba(40, 167, 69, 0.3);
-    color: #155724;
-}
-
-.alert-warning {
-    background-color: rgba(255, 193, 7, 0.15);
-    border-color: rgba(255, 193, 7, 0.3);
-    color: #856404;
+.alert {
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 0;
+    border: 1px solid transparent;
 }
 
 .alert-info {
@@ -60,18 +108,52 @@
     color: #0c5460;
 }
 
-/* Process step cards */
-.card.bg-light {
+/* Container styling */
+.container {
+    max-width: 1200px;
+    padding: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+}
+
+/* Back button styling */
+.btn-outline-secondary {
+    color: #6c757d;
+    border-color: #6c757d;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
     transition: all 0.3s ease;
 }
 
-.card.bg-light:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+.btn-outline-secondary:hover {
+    color: #fff;
+    background-color: #6c757d;
+    border-color: #6c757d;
+    transform: translateY(-2px);
 }
 
-/* Dynamic progress width - This will be set via JavaScript */
-.progress-width-dynamic {
-    transition: width 0.6s ease;
-    width: 0%; /* Default starting width */
+/* Typography */
+h1 {
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #444;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+.small {
+    font-size: 85%;
 }

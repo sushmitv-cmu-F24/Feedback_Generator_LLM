@@ -3,10 +3,11 @@
 <head>
     <title>Feedback Learning Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/reinforcement_dashboard.css') }}" rel="stylesheet">
 </head>
 <body>
-    <div class="container mt-4">
+    <div class="container mt-4 mb-4">
         <h1>Feedback Learning Dashboard</h1>
         <a href="{{ url_for('index') }}" class="btn btn-outline-secondary mb-4">Back to List</a>
         
@@ -18,49 +19,33 @@
                     <div class="card-body">
                         {% if stats.status == 'success' %}
                             <div class="mb-3">
-                                <h4>Collected Feedback</h4>
+                                <h4>Student Feedback</h4>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span>Total submissions with feedback:</span>
                                     <span class="badge bg-primary">{{ stats.total_samples }}</span>
                                 </div>
-                                
-                                {% if stats.samples_needed_for_improvement > 0 %}
-                                    <div class="alert alert-warning mt-2">
-                                        Need {{ stats.samples_needed_for_improvement }} more samples for improved feedback
-                                    </div>
-                                {% else %}
-                                    <div class="alert alert-success mt-2">
-                                        Sufficient data for generating improved feedback
-                                    </div>
-                                {% endif %}
                             </div>
                             
                             <div class="mb-3">
                                 <h4>Rating Statistics</h4>
                                 <ul class="list-group list-group-flush">
                                     <li class="list-group-item d-flex justify-content-between">
-                                        <span>Average Rating:</span>
+                                        <span><i class="bi bi-hand-thumbs-up text-success"></i> Helpful:</span>
+                                        <span class="badge bg-success">{{ stats.thumbs_up_count }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span><i class="bi bi-hand-thumbs-down text-danger"></i> Not Helpful:</span>
+                                        <span class="badge bg-danger">{{ stats.thumbs_down_count }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Positive Rate:</span>
                                         <span class="badge bg-primary">{{ (stats.avg_rating * 100)|int }}%</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between">
-                                        <span>Median Rating:</span>
-                                        <span class="badge bg-primary">{{ (stats.median_rating * 100)|int }}%</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between">
-                                        <span>Trend:</span>
-                                        {% if stats.recent_trend == 'improving' %}
-                                            <span class="badge bg-success">Improving</span>
-                                        {% elif stats.recent_trend == 'stable' %}
-                                            <span class="badge bg-info">Stable</span>
-                                        {% else %}
-                                            <span class="badge bg-warning">Declining</span>
-                                        {% endif %}
                                     </li>
                                 </ul>
                             </div>
                         {% elif stats.status == 'no_data' %}
                             <div class="alert alert-info">
-                                No feedback data collected yet. Review some model feedback to get started.
+                                No feedback data collected yet. Get student ratings to see statistics.
                             </div>
                         {% else %}
                             <div class="alert alert-danger">
@@ -69,123 +54,41 @@
                         {% endif %}
                     </div>
                 </div>
-            </div>
-            
-            <!-- Trend Chart -->
-            <div class="col-md-8">
+                
+                <!-- Student Feedback Distribution -->
                 <div class="card">
-                    <div class="card-header bg-primary text-white">Feedback Rating Trend</div>
+                    <div class="card-header bg-primary text-white">Student Feedback Distribution</div>
                     <div class="card-body">
                         {% if has_trend_data %}
                             <div class="trend-container">
-                                <img src="data:image/png;base64,{{ trend_data }}" class="trend-image" alt="Rating Trend Chart">
+                                <img src="data:image/png;base64,{{ pie_chart_data }}" class="trend-image" alt="Student Rating Distribution">
                             </div>
                         {% else %}
                             <div class="alert alert-info">
-                                Not enough data to show trends. Need at least 2 feedback submissions.
+                                <i class="bi bi-info-circle"></i> Not enough data to show distribution. Need at least one student rating.
                             </div>
                         {% endif %}
                     </div>
                 </div>
-                
-                <!-- Data Collection Progress -->
-                <div class="card mt-3">
-                    <div class="card-header">Data Collection Progress</div>
+            </div>
+            
+            <!-- Quality Metrics Chart - Now Full Width in Second Column -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-success text-white">Feedback Quality Metrics</div>
                     <div class="card-body">
-                        <h5>Progress toward improved feedback</h5>
-                        {% if stats.status == 'success' %}
-                            {% set progress_percent = (stats.total_samples / (stats.total_samples + stats.samples_needed_for_improvement)) * 100 %}
-                            {% if progress_percent >= 100 %}
-                                {% set progress_percent = 100 %}
-                            {% endif %}
-                            
-                            <div class="position-relative">
-                                <div class="progress-label">
-                                    {{ stats.total_samples }} / {{ stats.total_samples + stats.samples_needed_for_improvement }}
-                                </div>
-                                <div class="progress progress-tall mb-3">
-                                    <div class="progress-bar bg-success progress-bar-striped progress-width-dynamic" 
-                                        role="progressbar"
-                                        data-progress="{{ progress_percent }}"
-                                        aria-valuenow="{{ progress_percent }}" 
-                                        aria-valuemin="0" 
-                                        aria-valuemax="100">
-                                    </div>
-                                </div>
+                        {% if has_quality_data %}
+                            <div class="trend-container">
+                                <img src="data:image/png;base64,{{ quality_chart_data }}" class="trend-image" alt="Quality Metrics Chart">
                             </div>
-                            
-                            {% if progress_percent < 100 %}
-                                <p class="text-muted">
-                                    Need {{ stats.samples_needed_for_improvement }} more instructor feedback submissions before improvements can be generated.
-                                </p>
-                            {% else %}
-                                <p class="text-success">
-                                    ✓ Sufficient data collected for generating improved feedback!
-                                </p>
-                            {% endif %}
+                            <div class="alert alert-info mt-2">
+                                <i class="bi bi-info-circle"></i> Chart shows ROUGE-L, BLEU, and BERTScores for submissions with feedback evaluation.
+                            </div>
                         {% else %}
-                            <div class="position-relative">
-                                <div class="progress-label">
-                                    0 / 3
-                                </div>
-                                <div class="progress progress-tall mb-3">
-                                    <div class="progress-bar bg-info progress-bar-striped" 
-                                        role="progressbar" 
-                                        style="width: 0%;" 
-                                        aria-valuenow="0" 
-                                        aria-valuemin="0" 
-                                        aria-valuemax="100">
-                                    </div>
-                                </div>
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> No quality metrics data available yet. Quality metrics are calculated when feedback is evaluated against references.
                             </div>
-                            <p class="text-muted">
-                                Start reviewing model feedback to collect data for improved feedback generation.
-                            </p>
                         {% endif %}
-                    </div>
-                </div>
-                
-                <!-- How It Works Section -->
-                <div class="card mt-3">
-                    <div class="card-header">How Feedback Learning Works</div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <h5>Simple 3-Step Process:</h5>
-                                <ol class="mb-4">
-                                    <li><strong>Collect Feedback</strong> - Instructors review and correct model-generated feedback</li>
-                                    <li><strong>Learn Patterns</strong> - System learns what makes good feedback based on instructor ratings</li>
-                                    <li><strong>Apply Learning</strong> - New feedback is improved using patterns from instructor examples</li>
-                                </ol>
-                                
-                                <div class="row g-3 text-center">
-                                    <div class="col-md-4">
-                                        <div class="card bg-light h-100">
-                                            <div class="card-body">
-                                                <h5 class="card-title">1. Collect</h5>
-                                                <p class="card-text">Rate and improve automated feedback</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="card bg-light h-100">
-                                            <div class="card-body">
-                                                <h5 class="card-title">2. Learn</h5>
-                                                <p class="card-text">Learn from instructor examples</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="card bg-light h-100">
-                                            <div class="card-body">
-                                                <h5 class="card-title">3. Apply</h5>
-                                                <p class="card-text">Generate better feedback automatically</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -194,14 +97,5 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set dynamic progress bar widths based on data-progress attribute
-            document.querySelectorAll('.progress-width-dynamic').forEach(function(element) {
-                const progressValue = element.getAttribute('data-progress');
-                element.style.width = progressValue + '%';
-            });
-        });
-    </script>
 </body>
 </html>

@@ -107,6 +107,4 @@ python evaluation_phase.py path/to/submission.zip
 
 1. Improve RIL further 
 2. Update UI for Feedback Quality metrics dashboard
-3. Update the RIL Dashboard.
-4. Update index page UI.
-5. Add the second task as well to this app.
+3. Add the second task as well to this app.
