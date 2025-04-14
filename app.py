@@ -601,6 +601,44 @@ def format_feedback_as_markdown(feedback_text):
     
     return '\n'.join(lines)
 
+def get_reference_feedback(student_id, closest_matches):
+    """
+    Get reference feedback from the most similar submission in processed_data.json.
+    
+    Args:
+        student_id: The current student ID
+        closest_matches: List of similar student IDs from FAISS
+        
+    Returns:
+        Tuple of (reference_feedback, source_id)
+    """
+    # Load processed data
+    try:
+        with open("data/processed_data.json", "r") as f:
+            processed_data = json.load(f)
+    except Exception as e:
+        print(f"⚠️ Error loading processed data: {e}")
+        return None, None
+    
+    # Find the first match with feedback that's not the current student
+    for match_id in closest_matches:
+        if match_id == student_id:
+            continue  # Skip the current student
+            
+        if match_id in processed_data and processed_data[match_id].get("feedback"):
+            feedback = processed_data[match_id]["feedback"]
+            # Extract text from the feedback structure
+            if isinstance(feedback, dict):
+                feedback_text = ""
+                for section, content in feedback.items():
+                    if content:
+                        feedback_text += f"{content}\n\n"
+                return feedback_text.strip(), match_id
+            else:
+                return feedback, match_id
+    
+    return None, None
+
 @app.route('/student/<student_id>')
 def student_view(student_id):
     """View generated feedback for a student."""
@@ -647,8 +685,31 @@ def student_view(student_id):
     evaluation_result = evaluate_submission(java_files)
     evaluation_result['java_files'] = java_files
     
+    # Get reference feedback from the most similar submission
+    reference_feedback, reference_source = get_reference_feedback(
+        student_id, 
+        evaluation_result.get('closest_matches', [])
+    )
+    
+    # Store the reference source
+    evaluation_result['reference_feedback_source'] = reference_source
+    
     # Add quality metrics
     feedback_text = evaluation_result['generated_feedback']
+    
+    # Calculate alignment with reference feedback if available
+    if reference_feedback:
+        try:
+            evaluator = FeedbackEvaluation()
+            evaluation_scores = evaluator.evaluate_feedback_quality(feedback_text, reference_feedback)
+            evaluation_result['feedback_evaluation'] = evaluation_scores
+            print(f"Calculated metrics using reference feedback from {reference_source}")
+        except Exception as e:
+            print(f"⚠️ Error calculating feedback metrics: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    # Add standard quality metrics
     quality_metrics = metrics.evaluate_feedback(
         feedback_text, 
         evaluation_result.get('detected_violations', [])
@@ -737,57 +798,64 @@ def instructor_view(student_id):
     if 'chat_history' not in feedback_data:
         feedback_data['chat_history'] = []
     
-    # Check for instructor feedback from PDF files
-    # This is a key step that might be missing in the current implementation
-    original_instructor_feedback = None
-    
-    # Look for instructor feedback in feedback structure if it exists
-    if 'feedback' in feedback_data and feedback_data['feedback']:
-        # This is where PDF-extracted feedback might be stored
-        if isinstance(feedback_data['feedback'], dict):
-            # Try to get instructor feedback from various possible structures
-            if 'instructor_feedback' in feedback_data['feedback']:
-                original_instructor_feedback = feedback_data['feedback']['instructor_feedback']
-            elif 'general_comments' in feedback_data['feedback']:
-                original_instructor_feedback = feedback_data['feedback']['general_comments']
-            elif 'suggestions' in feedback_data['feedback']:
-                original_instructor_feedback = feedback_data['feedback']['suggestions']
-        elif isinstance(feedback_data['feedback'], str):
-            original_instructor_feedback = feedback_data['feedback']
-    
-    # If we found original instructor feedback but no instructor_feedback field yet
-    if original_instructor_feedback and not feedback_data.get('instructor_feedback'):
-        print(f"Found original instructor feedback: {len(original_instructor_feedback)} chars")
-        feedback_data['instructor_feedback'] = original_instructor_feedback
-    
-    # Now calculate metrics with the potentially found instructor feedback
+    # Get/recalculate metrics using reference feedback from similar submissions
     if 'generated_feedback' in feedback_data:
-        try:
-            evaluator = FeedbackEvaluation()
+        # Get reference feedback from closest matches
+        closest_matches = []
+        if 'closest_matches' in feedback_data:
+            closest_matches = feedback_data['closest_matches']
+        else:
+            # Reload the FAISS index
+            reload_faiss_index()
             
-            generated_feedback = feedback_data.get('generated_feedback', '')
-            instructor_feedback = feedback_data.get('instructor_feedback', '')
+            # Get submission embedding
+            from evaluation_phase import get_submission_embedding, find_closest_past_submissions
             
-            print(f"Calculating alignment scores in instructor view:")
-            print(f"Generated text: {len(generated_feedback)} chars")
-            print(f"Instructor text: {len(instructor_feedback)} chars")
+            # Parse all Java files for class structure if needed
+            parsed_classes = feedback_data.get('parsed_classes', {})
+            if not parsed_classes and 'java_files' in feedback_data:
+                from training_phase import parse_java_code
+                parsed_classes = {}
+                for file_path, content in feedback_data['java_files'].items():
+                    file_parsed = parse_java_code(content)
+                    if file_parsed:  # Only add if parsing was successful
+                        parsed_classes.update(file_parsed)
+                feedback_data['parsed_classes'] = parsed_classes
             
-            # Calculate scores
-            evaluation_results = evaluator.evaluate_feedback_quality(generated_feedback, instructor_feedback)
-            
-            # Store the evaluation results
-            feedback_data['feedback_evaluation'] = evaluation_results
-            
-            # Debug
-            alignment_scores = evaluation_results.get('alignment_scores', {})
-            print(f"Calculated ROUGE-L: {alignment_scores.get('rouge', {}).get('rouge-l-f', 0)}")
-            print(f"Calculated BLEU: {alignment_scores.get('bleu_score', 0)}")
-            print(f"Calculated BERT: {alignment_scores.get('bert_score', 0)}")
-            
-        except Exception as e:
-            print(f"Error calculating feedback metrics: {e}")
-            import traceback
-            traceback.print_exc()
+            # Find similar submissions
+            if 'java_files' in feedback_data and parsed_classes:
+                embedding = get_submission_embedding(feedback_data['java_files'], parsed_classes)
+                closest_matches = find_closest_past_submissions(embedding)
+                feedback_data['closest_matches'] = closest_matches
+        
+        # Get reference feedback
+        reference_feedback, reference_source = get_reference_feedback(student_id, closest_matches)
+        feedback_data['reference_feedback_source'] = reference_source
+        
+        # Calculate metrics with reference feedback
+        if reference_feedback:
+            try:
+                evaluator = FeedbackEvaluation()
+                generated_feedback = feedback_data.get('generated_feedback', '')
+                
+                print(f"Calculating alignment scores with reference feedback from {reference_source}")
+                
+                # Calculate scores
+                evaluation_results = evaluator.evaluate_feedback_quality(generated_feedback, reference_feedback)
+                
+                # Store the evaluation results
+                feedback_data['feedback_evaluation'] = evaluation_results
+                
+                # Debug
+                alignment_scores = evaluation_results.get('alignment_scores', {})
+                print(f"Calculated ROUGE-L: {alignment_scores.get('rouge', {}).get('rouge-l-f', 0)}")
+                print(f"Calculated BLEU: {alignment_scores.get('bleu_score', 0)}")
+                print(f"Calculated BERT: {alignment_scores.get('bert_score', 0)}")
+                
+            except Exception as e:
+                print(f"Error calculating feedback metrics: {e}")
+                import traceback
+                traceback.print_exc()
     
     # Update cache and save submissions
     if student_id in feedback_cache:
