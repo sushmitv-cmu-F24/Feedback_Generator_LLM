@@ -1,7 +1,5 @@
-// instructor_view.js
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Markdown renderer
+    // Initialize Markdown renderer with proper configuration
     initializeMarkdown();
     
     // Scroll chat to bottom
@@ -15,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * Initialize Markdown rendering
+ * Initialize Markdown rendering with improved handling for header formatting
  */
 function initializeMarkdown() {
     const markdownElements = document.querySelectorAll('.markdown-content');
@@ -28,7 +26,17 @@ function initializeMarkdown() {
     });
     
     markdownElements.forEach(function(element) {
-        element.innerHTML = marked.parse(element.textContent);
+        // First fix common markdown formatting issues
+        let content = element.textContent;
+        
+        // Fix header formatting (ensure space after ##)
+        content = content.replace(/##(\s*)([A-Za-z])/g, '## $2');
+        
+        // Parse the fixed markdown
+        element.innerHTML = marked.parse(content);
+        
+        // Add 'processed' class to avoid re-processing
+        element.classList.add('processed');
     });
 }
 
@@ -115,7 +123,12 @@ function setupChatForm() {
                     // Initialize markdown for the new message
                     const newMarkdownElements = document.querySelectorAll('.markdown-content:not(.processed)');
                     newMarkdownElements.forEach(function(element) {
-                        element.innerHTML = marked.parse(element.textContent);
+                        // Fix header formatting first
+                        let content = element.textContent;
+                        content = content.replace(/##(\s*)([A-Za-z])/g, '## $2');
+                        
+                        // Parse fixed markdown
+                        element.innerHTML = marked.parse(content);
                         element.classList.add('processed');
                     });
                     

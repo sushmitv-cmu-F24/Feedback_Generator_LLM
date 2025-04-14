@@ -1338,12 +1338,6 @@ def reinforcement_dashboard():
         
         if stats['status'] == 'success' and len(student_ratings) > 0:
             try:
-                import matplotlib
-                matplotlib.use('Agg')  # Use non-interactive backend
-                import matplotlib.pyplot as plt
-                import io
-                import base64
-                
                 # Create a figure for the pie chart - SMALLER SIZE
                 plt.figure(figsize=(5, 4))
                 

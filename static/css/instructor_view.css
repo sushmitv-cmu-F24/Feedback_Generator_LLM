@@ -1,5 +1,3 @@
-/* instructor_view.css */
-
 /* Layout */
 body {
     height: 100vh;
@@ -93,6 +91,24 @@ body {
     max-width: 90%;
 }
 
+/* Welcome message with enhanced styling */
+.welcome-message {
+    background-color: #e9f5fd;
+    border: 1px solid #bedcf3;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 0 auto 20px auto;
+    max-width: 95%;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.welcome-message p {
+    color: #3a6d99;
+    font-weight: 500;
+    margin-bottom: 0;
+}
+
 .message-header {
     padding: 10px 15px;
     border-bottom: 1px solid rgba(0,0,0,0.05);
@@ -132,20 +148,16 @@ body {
 }
 
 .score-high {
-    background-color: #28a745;
+    background-color: #28a745; /* Green for 70-100% */
 }
 
 .score-medium {
-    background-color: #17a2b8;
-}
-
-.score-low {
-    background-color: #ffc107;
-    color: #212529;
+    background-color: #ffc107; /* Yellow for 20-70% */
+    color: #212529; /* Darker text for better contrast on yellow */
 }
 
 .score-poor {
-    background-color: #dc3545;
+    background-color: #dc3545; /* Red for 0-20% */
 }
 
 .score-desc {
@@ -155,6 +167,170 @@ body {
     margin: 0 auto;
 }
 
+/* Metrics button styling - more professional */
+.btn-metrics {
+    background-color: #2c3e50;
+    color: #ffffff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-metrics:hover {
+    background-color: #34495e;
+    color: #ffffff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-metrics:focus {
+    box-shadow: 0 0 0 0.25rem rgba(44, 62, 80, 0.25);
+    color: #ffffff;
+}
+
+/* Metric row styling for better alignment */
+.metric-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.metric-label {
+    width: 120px;
+    text-align: right;
+    padding-right: 15px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.metric-value {
+    min-width: 60px;
+    text-align: left;
+    padding-left: 15px;
+    font-weight: bold;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.progress {
+    flex-grow: 1;
+    height: 15px;
+    margin: 0;
+    border-radius: 8px;
+    background-color: #f0f0f0;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Progress bar styling */
+.progress-bar {
+    min-width: 2%;
+    transition: width 0.6s ease;
+}
+
+/* Progress bar width classes */
+.progress-width-0 { width: 0%; }
+.progress-width-1 { width: 1%; }
+.progress-width-2 { width: 2%; }
+.progress-width-3 { width: 3%; }
+.progress-width-4 { width: 4%; }
+.progress-width-5 { width: 5%; }
+.progress-width-6 { width: 6%; }
+.progress-width-7 { width: 7%; }
+.progress-width-8 { width: 8%; }
+.progress-width-9 { width: 9%; }
+.progress-width-10 { width: 10%; }
+.progress-width-11 { width: 11%; }
+.progress-width-12 { width: 12%; }
+.progress-width-13 { width: 13%; }
+.progress-width-14 { width: 14%; }
+.progress-width-15 { width: 15%; }
+.progress-width-16 { width: 16%; }
+.progress-width-17 { width: 17%; }
+.progress-width-18 { width: 18%; }
+.progress-width-19 { width: 19%; }
+.progress-width-20 { width: 20%; }
+.progress-width-21 { width: 21%; }
+.progress-width-22 { width: 22%; }
+.progress-width-23 { width: 23%; }
+.progress-width-24 { width: 24%; }
+.progress-width-25 { width: 25%; }
+.progress-width-26 { width: 26%; }
+.progress-width-27 { width: 27%; }
+.progress-width-28 { width: 28%; }
+.progress-width-29 { width: 29%; }
+.progress-width-30 { width: 30%; }
+.progress-width-31 { width: 31%; }
+.progress-width-32 { width: 32%; }
+.progress-width-33 { width: 33%; }
+.progress-width-34 { width: 34%; }
+.progress-width-35 { width: 35%; }
+.progress-width-36 { width: 36%; }
+.progress-width-37 { width: 37%; }
+.progress-width-38 { width: 38%; }
+.progress-width-39 { width: 39%; }
+.progress-width-40 { width: 40%; }
+.progress-width-41 { width: 41%; }
+.progress-width-42 { width: 42%; }
+.progress-width-43 { width: 43%; }
+.progress-width-44 { width: 44%; }
+.progress-width-45 { width: 45%; }
+.progress-width-46 { width: 46%; }
+.progress-width-47 { width: 47%; }
+.progress-width-48 { width: 48%; }
+.progress-width-49 { width: 49%; }
+.progress-width-50 { width: 50%; }
+.progress-width-51 { width: 51%; }
+.progress-width-52 { width: 52%; }
+.progress-width-53 { width: 53%; }
+.progress-width-54 { width: 54%; }
+.progress-width-55 { width: 55%; }
+.progress-width-56 { width: 56%; }
+.progress-width-57 { width: 57%; }
+.progress-width-58 { width: 58%; }
+.progress-width-59 { width: 59%; }
+.progress-width-60 { width: 60%; }
+.progress-width-61 { width: 61%; }
+.progress-width-62 { width: 62%; }
+.progress-width-63 { width: 63%; }
+.progress-width-64 { width: 64%; }
+.progress-width-65 { width: 65%; }
+.progress-width-66 { width: 66%; }
+.progress-width-67 { width: 67%; }
+.progress-width-68 { width: 68%; }
+.progress-width-69 { width: 69%; }
+.progress-width-70 { width: 70%; }
+.progress-width-71 { width: 71%; }
+.progress-width-72 { width: 72%; }
+.progress-width-73 { width: 73%; }
+.progress-width-74 { width: 74%; }
+.progress-width-75 { width: 75%; }
+.progress-width-76 { width: 76%; }
+.progress-width-77 { width: 77%; }
+.progress-width-78 { width: 78%; }
+.progress-width-79 { width: 79%; }
+.progress-width-80 { width: 80%; }
+.progress-width-81 { width: 81%; }
+.progress-width-82 { width: 82%; }
+.progress-width-83 { width: 83%; }
+.progress-width-84 { width: 84%; }
+.progress-width-85 { width: 85%; }
+.progress-width-86 { width: 86%; }
+.progress-width-87 { width: 87%; }
+.progress-width-88 { width: 88%; }
+.progress-width-89 { width: 89%; }
+.progress-width-90 { width: 90%; }
+.progress-width-91 { width: 91%; }
+.progress-width-92 { width: 92%; }
+.progress-width-93 { width: 93%; }
+.progress-width-94 { width: 94%; }
+.progress-width-95 { width: 95%; }
+.progress-width-96 { width: 96%; }
+.progress-width-97 { width: 97%; }
+.progress-width-98 { width: 98%; }
+.progress-width-99 { width: 99%; }
+.progress-width-100 { width: 100%; }
+
 /* Textarea auto-resize */
 textarea.form-control {
     min-height: 38px;
@@ -162,12 +338,27 @@ textarea.form-control {
     border-radius: 20px;
     padding: 8px 15px;
     resize: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.2s ease;
+}
+
+textarea.form-control:focus {
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
 }
 
 /* Button styling */
 .btn-primary {
     border-radius: 20px;
     padding: 8px 20px;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 /* Markdown styling */
@@ -176,6 +367,8 @@ textarea.form-control {
     margin-top: 1.5rem;
     margin-bottom: 1rem;
     color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.3rem;
 }
 
 .markdown-content h3 {
@@ -200,6 +393,7 @@ textarea.form-control {
     padding: 0.75rem;
     border-radius: 4px;
     overflow-x: auto;
+    border: 1px solid #eee;
 }
 
 .markdown-content code {
