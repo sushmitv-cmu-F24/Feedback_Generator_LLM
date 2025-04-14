@@ -16388,25 +16388,25 @@
             "score": 0.0
         }
     },
-    "chenpongki": {
+    "chenruobing": {
         "feedback": {
             "general_comments": "",
-            "solid_violations": "[PYTHON]\ndef get_unique_elements(my_list):\n    return list(set(my_list))\n[/PYTHON]\n\n[TESTS]\n# Test case 1:\nassert get_unique_elements([]) == []\n# Test case 2:\nassert get_unique_elements([1]) == [1]\n# Test case 3:\nassert get_unique_elements([1, 2, 3, 2, 1]) == [1, 2, 3]\n# Test case 4:\nassert get_unique_elements([1, 2, 3, 4, 5]) == [1, 2, 3, 4, 5]\n# Test case 5:\nassert get_unique_elements([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]\n[/TESTS]\n        \n        New feedback:\n        The current implementation is correct but it's important to consider the SOLID principles.\n        In particular, the Single Responsibility Principle (SRP) states that a class or module should have only one reason to change.\n        This method has two reasons to change: the algorithm for finding unique elements and the way they are returned as a list.\n        It would be better to separate these concerns into different methods, which would make the code more flexible and easier to test.\n        \n        Also, it's worth considering the Open/Closed Principle (OCP), which states that classes should be open for extension but closed for modification.\n        The current implementation relies on a specific data structure (a list) and it would be better if this method could work with other data structures as well.\n        \n        Finally, it's important to ensure that the code is readable and maintainable.\n        The use of the set() method is not immediately understandable for someone who is not familiar with Python's built-in functions.\n        It would be better to add a comment explaining what this line does and why it's necessary.\n        \n        Overall, while the current implementation meets the requirements, there are opportunities to improve its design and make it more robust and maintainable.",
-            "suggestions": null
+            "solid_violations": "- Single Responsibility Principle (SRP): The `User` class has 9 methods, which suggests that it may have too many responsibilities. However, this violation can be addressed by extracting some of the methods to other classes.\n- Dependency Inversion Principle (DIP): The `UserService` class depends on the concrete implementation of `PostgresDriver`, making it difficult to change the database layer without modifying the `UserService` class. However, this violation can be addressed by introducing an abstraction for `DatabaseDriver` and injecting it into the constructor of `UserService`.\n- Liskov Substitution Principle (LSP): The `deleteAccount` method in `AdminUser` changes expected behavior when called on a `User` object, which violates the LSP. This violation can be addressed by introducing an interface for `UserOperations` and implementing it in both `UserService` and `AdminUser`.\n- Interface Segregation Principle (ISP): The `UserOperations` interface includes methods that are not relevant to all implementing classes, such as `sendEmailNotification`, `sendSMSNotification`, and `sendPushNotification`. This violation can be addressed by creating separate interfaces for different responsibilities, such as `NotificationSender` and `AccountDeleter`.\n- Open-Closed Principle (OCP): The `UserService` class is open to modification and closed to extension, which makes it difficult to add new features without modifying the existing code. This violation can be addressed by creating abstractions for the different responsibilities of `UserService` and implementing them in separate classes.",
+            "suggestions": "- Extract Method: Consider extracting other methods from `UserService` to reduce its size and improve its readability.\n- Move Method: Move all methods that are not dependent on the database layer to a new interface, such as `NotificationSender`.\n- Extract Class: Consider creating separate classes for different responsibilities of `UserService`, such as `AccountManager` and `NotificationSender`.\n- Move Field: Move all fields that are not related to user information to a separate class, such as `AddressBook`.\n- Rename Method: Consider renaming the methods in `AdminUser` to make them more descriptive, such as `sendEmailPushNotifications` and `deleteAccounts`.\n\nNew Feedback:\nThe SOLID violations you mentioned are all valid concerns. However, there is one area that requires improvement, and that is the `User` class. As you mentioned, the `User` class has 9 methods, which suggests that it may have too many responsibilities. To address this issue, I would suggest extracting some of these methods to other classes. For example, you could create a separate class called `AccountManager` and move the `createAccount`, `deleteAccount`, and `updateAccount` methods from `UserService` to that class. This will make the code more modular and easier to maintain in the long run.\n\nRegarding the remaining SOLID violations, I agree with your suggestions for addressing them. For example, introducing an abstraction for `DatabaseDriver` and injecting it into the constructor of `UserService` is a good way to improve the code's dependency injection. Similarly, creating separate interfaces for different responsibilities, such as `NotificationSender` and `AccountDeleter`, will make the code more modular and easier to maintain.\n\nOverall, I think your feedback provides some useful suggestions for improving the quality of the code. Keep up the good work!"
         },
         "java_files": {
-            "SolidPrinciples/src/Main.java": "import solid.service.UserService;\nimport solid.user.AdminUser;\nimport solid.user.User;\n\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println(\"------------------Adding users-------------------------\");\n        // Create User instances\n        User user1 = new User(1, \"john_doe\", 25, 100000);\n        User user2 = new User(2, \"alice_smith\", 35, 100000);\n        User user3 = new AdminUser(0, \"bob_jones\", 65, 100000, true);\n\n        UserService userService = new UserService();\n\n        // Save users 1 and 2 using RegularUserService\n        userService.addUser(user1);\n        userService.addUser(user2);\n\n        userService.addUser(user3);\n\n\n        System.out.println(\"\\n------------------Sending notifications-------------------------\");\n\n        // Send notifications using different services\n        userService.sendTaxNotification(user1, \"Pay your taxes!\", \"EMAIL\");\n        userService.sendTaxNotification(user2, \"Pay your taxes!\", \"SMS\");\n//        userService.sendTaxNotification(user2, \"Pay your taxes!\", \"PUSH\"); //This breaks the code\n\n        userService.sendTaxNotification(user3, \"Pay your taxes!\", \"PUSH\");\n\n        System.out.println(\"\\n------------------Fetching users-------------------------\");\n\n        // Fetch and display user by ID -> there is an encapsulation violation here -> bug proneness\n        userService.getUserById(1);\n        userService.getUserById(0);\n\n        System.out.println(\"\\n------------------Deleting users-------------------------\");\n        // Delete accounts\n        userService.removeUser(user1);\n        userService.removeUser(user2);\n        userService.removeUser(user3);\n\n        userService.removeUser(user3);\n\n    }\n}",
-            "SolidPrinciples/src/solid/user/User.java": "package solid.user;\n\npublic class User {\n    private int id;\n    private String username;\n    private int age;\n    private double salary;\n    public String role;\n\n    // Constructor\n    public User(int id, String username, int age, double salary) {\n        this.id = id;\n        this.username = username;\n        this.age = age;\n        this.salary = salary;\n        this.role=\"regular\";\n    }\n\n    // Method to calculate tax based on age and salary\n    public double calculateTax() {\n        double taxRate;\n        if (age < 30) {\n            taxRate = 0.10; // 10% tax rate\n        } else if (age <= 60) {\n            taxRate = 0.20; // 20% tax rate\n        } else {\n            taxRate = 0.15; // 15% tax rate\n        }\n        return salary * taxRate;\n    }\n\n    // Regular users can delete themselves\n    public void deleteAccount() {\n        System.out.println(\"User account deleted: \" + username);\n    }\n\n    // Getters and setters (optional, for accessing private fields)\n    public int getId() {\n        return id;\n    }\n\n    public void setId(int id) {\n        this.id = id;\n    }\n\n    public String getUsername() {\n        return username;\n    }\n\n    public void setUsername(String username) {\n        this.username = username;\n    }\n\n    public int getAge() {\n        return age;\n    }\n\n    public void setAge(int age) {\n        this.age = age;\n    }\n    public boolean canDelete(){\n        return true;\n    }\n\n    @Override\n    public String toString() {\n        return \"User{\" +\n                \"id=\" + id +\n                \", username='\" + username + '\\'' +\n                \", age=\" + age +\n                \", salary=\" + salary+\n                '}';\n    }\n\n}",
-            "SolidPrinciples/src/solid/user/AdminUser.java": "package solid.user;\n\n/**\n * Why This Violates the Liskov Substitution Principle:\n * <ul>\n *   <li><b>Unexpected Behavior Change:</b> The <code>AdminUser</code> class overrides the <code>deleteAccount</code> method\n *   to provide different behavior. For regular users, the <code>deleteAccount</code> method always deletes the user account,\n *   but for <code>AdminUser</code>, the deletion is conditional (<code>if (hasSuperAdminRights)</code>), meaning the behavior\n *   is not consistent with the parent class.</li>\n *   <li><b>Client Code Assumptions Broken:</b> Any client code that relies on the <code>deleteAccount</code> method to\n *   always delete an account will break if it encounters an <code>AdminUser</code> with super admin rights. This violates the\n *   Liskov Substitution Principle because the subclass (<code>AdminUser</code>) cannot fully substitute the superclass\n *   (<code>User</code>) without altering the program's expected behavior.</li>\n * </ul>\n */\n\npublic class AdminUser extends User {\n    private boolean hasSuperAdminRights;\n\n    public AdminUser(int id, String username, int age, double salary, boolean hasSuperAdminRights) {\n        super(id, username, age, salary);\n        this.hasSuperAdminRights = hasSuperAdminRights;\n        this.role=\"admin\";\n    }\n    @Override\n    public boolean canDelete() {\n        return !hasSuperAdminRights;\n    }\n}",
-            "SolidPrinciples/src/solid/service/UserService.java": "package solid.service;\n\nimport solid.persistence.drivers.DatabaseDriver;\nimport solid.persistence.drivers.PostgresDriver;\nimport solid.user.AdminUser;\nimport solid.user.User;\n\n/**\n * Why This Violates the Interface Segregation Principle (ISP):\n * <ul>\n *   <li><b>Forces Irrelevant Implementations:</b> The <code>RegularUserService</code> class is forced to implement\n *   methods (<code>sendEmailNotification</code>, <code>sendSMSNotification</code>, <code>sendPushNotification</code>)\n *   that it does not need or use.</li>\n *   <li><b>Unsupported Operations:</b> The class throws <code>UnsupportedOperationException</code> for some of these methods,\n *   which is a clear sign that it is being forced to implement methods that are not relevant to its role.</li>\n *   <li><b>Low Cohesion:</b> The <code>UserOperations</code> interface is too broad and covers multiple\n *   responsibilities (user management and notification sending), which are unrelated for some implementing classes.</li>\n * </ul>\n *\n * <p>\n * Why This Violates the Dependency Inversion Principle (DIP):\n * </p>\n * <ul>\n *   <li><b>High-Level Module Depends on Low-Level Module:</b> The <code>UserService</code> class directly depends on the\n *   concrete <code>databaseDriver</code> class. This makes it difficult to change the database layer without modifying the\n *   <code>UserService</code> class.</li>\n *   <li><b>Lack of Abstractions:</b> There is no abstraction or interface that defines the behavior of a database driver,\n *   making the <code>UserService</code> class tightly coupled to the <code>databaseDriver</code>.</li>\n * </ul>\n *\n * <p>\n * Why This Violates the Open-Closed Principle (OCP):\n * </p>\n * <ul>\n *   <li><b>Modification Required for Each New Notification Type:</b> Every time a new notification type is needed\n *   (e.g., \"In-App Message\" or \"Webhook\"), you must modify the <code>sendNotification</code> method to add a new\n *   <code>else if</code> block and create a corresponding method for the new notification type.</li>\n *   <li><b>High Risk of Errors:</b> Frequent modifications increase the risk of introducing bugs, especially if the existing\n *   code is already complex.</li>\n *   <li><b>Difficult to Test and Maintain:</b> As more notification types are added, the <code>NotificationService</code> class\n *   becomes harder to test and maintain due to its increasing size and complexity.</li>\n * </ul>\n *\n * <p>\n * Why This Violates the Single Responsibility Principle (SRP):\n * </p>\n * <ul>\n *   <li><b>Managing User Data:</b> The <code>RegularUserService</code> class has methods like <code>createUser</code> and\n *   <code>deleteUser</code> that handle user data in the database.</li>\n *   <li><b>Sending Notifications:</b> The class also contains methods like <code>sendWelcomeEmail</code> and\n *   <code>sendPasswordResetEmail</code> that are responsible for sending different types of emails.</li>\n * </ul>\n */\n\npublic class UserService implements UserOperations {\n    private final NotificationService notificationService = new NotificationService();\n//    private databaseDriver databaseDriver;\n    private final DatabaseDriver databaseDriver=new PostgresDriver();\n    \n\n    public UserService() {\n        // Initialize RegularUserService with a databaseDriver\n    }\n\n    public User getUserById(int id) {\n        User fetchedUser = databaseDriver.query(id);\n\n        if (fetchedUser == null) {\n            System.out.println(\"User with ID \" + id + \" not found.\");\n            return null;\n        }\n        System.out.println(\"Fetched User: \" + fetchedUser.getUsername() + \", \" + fetchedUser.getAge() + \"\\n\");\n        return fetchedUser;\n    }\n\n    @Override\n    public void addUser(User user) {\n        databaseDriver.save(user);\n    }\n\n    @Override\n    public void removeUser(User user) {\n        boolean del = databaseDriver.delete(user.getId());\n        if(!user.canDelete()){\n            System.out.println(\"Cannot delete admin user with super admin rights.\");\n        }else{\n            if (del) {\n                user.deleteAccount();\n                System.out.println(\"Account deleted successfully.\\n\");\n            } else {\n                System.out.println(\"User with id \" + user.getId() + \" not found!\\n\");\n            }\n        }\n    }\n\n    // Method to send a notification based on notification type\n    public void sendTaxNotification(User user, String message, String notificationType) {\n        message = message + \" Value: \" + user.calculateTax();\n\n        notificationService.sendNotification(user, message, notificationType);\n    }\n}",
-            "SolidPrinciples/src/solid/service/UserOperations.java": "package solid.service;\n\nimport solid.user.User;\n\n/**\n * Low Cohesion:</b> The <code>UserOperations</code> interface is too broad and covers multiple\n * responsibilities (user management and notification sending), which are unrelated for some implementing classes.\n */\npublic interface UserOperations{\n    void addUser(User user);\n    void removeUser(User user);\n}",
-            "SolidPrinciples/src/solid/service/NotificationService.java": "package solid.service;\n\nimport solid.service.sender.EmailNotificationSender;\nimport solid.service.sender.NotificationSender;\nimport solid.service.sender.PushNotificationSender;\nimport solid.service.sender.SMSNotificationSender;\nimport solid.user.AdminUser;\nimport solid.user.User;\n\nimport java.util.HashMap;\nimport java.util.Map;\n\npublic class NotificationService{\n    private final Map<String, NotificationSender> senders = new HashMap<>();\n\n    public NotificationService() {\n        senders.put(\"EMAIL\", new EmailNotificationSender());\n        senders.put(\"SMS\", new SMSNotificationSender());\n        senders.put(\"PUSH\", new PushNotificationSender());\n        //add new senders as needed without modifying this class\n    }\n\n    // Method to send a notification based on notification type\n    public void sendNotification(User user, String message, String notificationType) {\n        NotificationSender sender = senders.get(notificationType);\n        if(sender!=null){\n            sender.send(user,message);\n        }else{\n            throw new IllegalArgumentException(\"Unknown notification type.\");\n        }\n    }\n\n}",
-            "SolidPrinciples/src/solid/persistence/drivers/PostgresDriver.java": "package solid.persistence.drivers;\n\nimport solid.user.User;\n\nimport java.util.HashMap;\n\npublic class PostgresDriver implements DatabaseDriver {\n    private static HashMap<Integer, User> users = new HashMap<>();\n\n    // Method to simulate a database query\n    @Override\n    public boolean save(User user) {\n        System.out.println(\"Executing Save SQL: \" + user);\n\n        // Here, you would typically execute the query against a real PostgreSQL database and return a ResultSet.\n        // This is just a simulation, so we'll return a list with the queried users.\n        users.put(user.getId(), user);\n\n        return true;\n    }\n\n    @Override\n    public User query(int id) {\n        System.out.println(\"Executing SQL query\");\n        try {\n            return users.get(id);\n        } catch (IndexOutOfBoundsException  e) {\n            return null;\n        }\n    }\n    @Override\n    public boolean delete(int id) {\n        System.out.println(\"Executing SQL delete\");\n        try {\n            users.remove(id);\n            return true;\n        } catch (IndexOutOfBoundsException  e) {\n            return false;\n        }\n    }\n}",
-            "SolidPrinciples/src/solid/persistence/drivers/DatabaseDriver.java": "package solid.persistence.drivers;\n\nimport solid.user.User;\n\npublic interface DatabaseDriver {\n    public boolean save(User user);\n    public User query(int id);\n    public boolean delete(int id);\n\n}",
-            "SolidPrinciples/src/solid/service/sender/EmailNotificationSender.java": "package solid.service.sender;\n\nimport solid.user.User;\n\npublic class EmailNotificationSender implements NotificationSender{\n    @Override\n    public void send(User user, String message) {\n        System.out.println(\"Sending EMAIL to \" + user.getUsername() + \" -> \" + message);\n    }\n}",
-            "SolidPrinciples/src/solid/service/sender/SMSNotificationSender.java": "package solid.service.sender;\n\nimport solid.user.User;\n\npublic class SMSNotificationSender implements NotificationSender{\n    @Override\n    public void send(User user, String message) {\n        System.out.println(\"Sending SMS to \" + user.getUsername() + \" -> \" + message);\n    }\n}",
-            "SolidPrinciples/src/solid/service/sender/PushNotificationSender.java": "package solid.service.sender;\n\nimport solid.user.AdminUser;\nimport solid.user.User;\n\npublic class PushNotificationSender implements NotificationSender{\n    @Override\n    public void send(User user, String message) {\n//         TODO: refactoring this ugly code\n        if(!user.role.equals(\"admin\")){\n            throw new UnsupportedOperationException(\"Regular user does not support push notifications\");\n        }else{\n            System.out.println(\"Sending PUSH to \" + user.getUsername() + \" -> \" + message);;\n        }\n\n\n    }\n\n}",
-            "SolidPrinciples/src/solid/service/sender/NotificationSender.java": "package solid.service.sender;\n\nimport solid.user.User;\n\npublic interface NotificationSender {\n    void send(User user, String message);\n}"
+            "Task1/src/Main.java": "import solid.persistence.DatabaseDriver;\nimport solid.persistence.PostgresDriver;\nimport solid.service.UserService;\nimport solid.user.AdminUser;\nimport solid.user.User;\n\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println(\"------------------Adding users-------------------------\");\n        // Create User instances\n        User user1 = new User(1, \"john_doe\", 25, 100000);\n        User user2 = new User(2, \"alice_smith\", 35, 100000);\n        User user3 = new AdminUser(0, \"bob_jones\", 65, 100000, true);\n\n        DatabaseDriver postgresDriver = new PostgresDriver();\n        UserService userService = new UserService(postgresDriver);\n\n        // Save users 1 and 2 using RegularUserService\n        userService.addUser(user1);\n        userService.addUser(user2);\n\n        userService.addUser(user3);\n\n\n        System.out.println(\"\\n------------------Sending notifications-------------------------\");\n\n        // Send notifications using different services\n        userService.sendTaxNotification(user1, \"Pay your taxes!\", \"EMAIL\");\n        userService.sendTaxNotification(user2, \"Pay your taxes!\", \"SMS\");\n//        userService.sendTaxNotification(user2, \"Pay your taxes!\", \"PUSH\"); //This breaks the code\n\n        userService.sendTaxNotification(user3, \"Pay your taxes!\", \"PUSH\");\n\n        System.out.println(\"\\n------------------Fetching users-------------------------\");\n\n        // Fetch and display user by ID -> there is an encapsulation violation here -> bug proneness\n        userService.getUserById(1);\n        userService.getUserById(0);\n\n        System.out.println(\"\\n------------------Deleting users-------------------------\");\n        // Delete accounts\n        userService.removeUser(user1);\n        userService.removeUser(user2);\n        userService.removeUser(user3);\n\n        userService.removeUser(user3);\n\n    }\n}",
+            "Task1/src/solid/user/User.java": "package solid.user;\n\npublic class User {\n    private int id;\n    private String username;\n    private int age;\n    private double salary;\n\n    // Constructor\n    public User(int id, String username, int age, double salary) {\n        this.id = id;\n        this.username = username;\n        this.age = age;\n        this.salary = salary;\n    }\n\n    // Method to calculate tax based on age and salary\n    public double calculateTax() {\n        double taxRate;\n        if (age < 30) {\n            taxRate = 0.10; // 10% tax rate\n        } else if (age <= 60) {\n            taxRate = 0.20; // 20% tax rate\n        } else {\n            taxRate = 0.15; // 15% tax rate\n        }\n        return salary * taxRate;\n    }\n\n    // Regular users can delete themselves\n    public void deleteAccount() {\n        System.out.println(\"User account deleted: \" + username);\n    }\n\n    // Getters and setters (optional, for accessing private fields)\n    public int getId() {\n        return id;\n    }\n\n    public void setId(int id) {\n        this.id = id;\n    }\n\n    public String getUsername() {\n        return username;\n    }\n\n    public void setUsername(String username) {\n        this.username = username;\n    }\n\n    public int getAge() {\n        return age;\n    }\n\n    public void setAge(int age) {\n        this.age = age;\n    }\n\n    @Override\n    public String toString() {\n        return \"User{\" +\n                \"id=\" + id +\n                \", username='\" + username + '\\'' +\n                \", age=\" + age +\n                \", salary=\" + salary +\n                '}';\n    }\n}",
+            "Task1/src/solid/user/AdminUser.java": "package solid.user;\n\n/**\n * Why This Violates the Liskov Substitution Principle:\n * <ul>\n *   <li><b>Unexpected Behavior Change:</b> The <code>AdminUser</code> class overrides the <code>deleteAccount</code> method\n *   to provide different behavior. For regular users, the <code>deleteAccount</code> method always deletes the user account,\n *   but for <code>AdminUser</code>, the deletion is conditional (<code>if (hasSuperAdminRights)</code>), meaning the behavior\n *   is not consistent with the parent class.</li>\n *   <li><b>Client Code Assumptions Broken:</b> Any client code that relies on the <code>deleteAccount</code> method to\n *   always delete an account will break if it encounters an <code>AdminUser</code> with super admin rights. This violates the\n *   Liskov Substitution Principle because the subclass (<code>AdminUser</code>) cannot fully substitute the superclass\n *   (<code>User</code>) without altering the program's expected behavior.</li>\n * </ul>\n */\n\npublic class AdminUser extends User {\n    private boolean hasSuperAdminRights;\n\n    public AdminUser(int id, String username, int age, double salary, boolean hasSuperAdminRights) {\n        super(id, username, age, salary);\n        this.hasSuperAdminRights = hasSuperAdminRights;\n    }\n\n    public boolean canDelete() {\n        return !hasSuperAdminRights;\n    }\n}",
+            "Task1/src/solid/persistence/PostgresDriver.java": "package solid.persistence;\n\nimport solid.user.User;\n\nimport java.util.HashMap;\n\npublic class PostgresDriver implements DatabaseDriver {\n    private static HashMap<Integer, User> users = new HashMap<>();\n\n    // Method to simulate a database query\n    public boolean save(User user) {\n        System.out.println(\"Executing Save SQL: \" + user);\n\n        // Here, you would typically execute the query against a real PostgreSQL database and return a ResultSet.\n        // This is just a simulation, so we'll return a list with the queried users.\n        users.put(user.getId(), user);\n\n        return true;\n    }\n\n    public User query(int id) {\n        System.out.println(\"Executing SQL query\");\n        try {\n            return users.get(id);\n        } catch (IndexOutOfBoundsException  e) {\n            return null;\n        }\n    }\n\n    public boolean delete(int id) {\n        System.out.println(\"Executing SQL delete\");\n        try {\n            users.remove(id);\n            return true;\n        } catch (IndexOutOfBoundsException  e) {\n            return false;\n        }\n    }\n}",
+            "Task1/src/solid/persistence/DatabaseDriver.java": "package solid.persistence;\n\nimport solid.user.User;\n\npublic interface DatabaseDriver {\n    boolean save(User user);\n    User query(int id);\n    boolean delete(int id);\n}",
+            "Task1/src/solid/service/UserService.java": "package solid.service;\n\nimport solid.persistence.DatabaseDriver;\nimport solid.persistence.PostgresDriver;\nimport solid.user.AdminUser;\nimport solid.user.User;\n\n/**\n * Why This Violates the Interface Segregation Principle (ISP):\n * <ul>\n *   <li><b>Forces Irrelevant Implementations:</b> The <code>RegularUserService</code> class is forced to implement\n *   methods (<code>sendEmailNotification</code>, <code>sendSMSNotification</code>, <code>sendPushNotification</code>)\n *   that it does not need or use.</li>\n *   <li><b>Unsupported Operations:</b> The class throws <code>UnsupportedOperationException</code> for some of these methods,\n *   which is a clear sign that it is being forced to implement methods that are not relevant to its role.</li>\n *   <li><b>Low Cohesion:</b> The <code>UserOperations</code> interface is too broad and covers multiple\n *   responsibilities (user management and notification sending), which are unrelated for some implementing classes.</li>\n * </ul>\n *\n * <p>\n * Why This Violates the Dependency Inversion Principle (DIP):\n * </p>\n * <ul>\n *   <li><b>High-Level Module Depends on Low-Level Module:</b> The <code>UserService</code> class directly depends on the\n *   concrete <code>PostgresDriver</code> class. This makes it difficult to change the database layer without modifying the\n *   <code>UserService</code> class.</li>\n *   <li><b>Lack of Abstractions:</b> There is no abstraction or interface that defines the behavior of a database driver,\n *   making the <code>UserService</code> class tightly coupled to the <code>PostgresDriver</code>.</li>\n * </ul>\n *\n * <p>\n * Why This Violates the Open-Closed Principle (OCP):\n * </p>\n * <ul>\n *   <li><b>Modification Required for Each New Notification Type:</b> Every time a new notification type is needed\n *   (e.g., \"In-App Message\" or \"Webhook\"), you must modify the <code>sendNotification</code> method to add a new\n *   <code>else if</code> block and create a corresponding method for the new notification type.</li>\n *   <li><b>High Risk of Errors:</b> Frequent modifications increase the risk of introducing bugs, especially if the existing\n *   code is already complex.</li>\n *   <li><b>Difficult to Test and Maintain:</b> As more notification types are added, the <code>NotificationService</code> class\n *   becomes harder to test and maintain due to its increasing size and complexity.</li>\n * </ul>\n *\n * <p>\n * Why This Violates the Single Responsibility Principle (SRP):\n * </p>\n * <ul>\n *   <li><b>Managing User Data:</b> The <code>RegularUserService</code> class has methods like <code>createUser</code> and\n *   <code>deleteUser</code> that handle user data in the database.</li>\n *   <li><b>Sending Notifications:</b> The class also contains methods like <code>sendWelcomeEmail</code> and\n *   <code>sendPasswordResetEmail</code> that are responsible for sending different types of emails.</li>\n * </ul>\n */\n\npublic class UserService implements UserOperations {\n    private final NotificationService notificationService = new NotificationService();\n    private DatabaseDriver databaseDriver;\n\n    public UserService(DatabaseDriver databaseDriver) {\n        this.databaseDriver = databaseDriver;\n    }\n\n    public User getUserById(int id) {\n        User fetchedUser = databaseDriver.query(id);\n\n        if (fetchedUser == null) {\n            System.out.println(\"User with ID \" + id + \" not found.\");\n            return null;\n        }\n        System.out.println(\"Fetched User: \" + fetchedUser.getUsername() + \", \" + fetchedUser.getAge() + \"\\n\");\n        return fetchedUser;\n    }\n\n    public void addUser(User user) {\n        databaseDriver.save(user);\n    }\n\n    @Override\n    public void removeUser(User user) {\n        if (user instanceof AdminUser && ((AdminUser)user).canDelete()) {\n            System.out.println(\"Cannot delete admin user with super admin rights\");\n        } else {\n            boolean del = databaseDriver.delete(user.getId());\n            if (del) {\n                user.deleteAccount();\n                System.out.println(\"Account deleted successfully.\\n\");\n            } else {\n                System.out.println(\"User with id \" + user.getId() + \" not found!\\n\");\n            }\n        }\n    }\n\n    // Method to send a notification based on notification type\n    public void sendTaxNotification(User user, String message, String notificationType) {\n        message = message + \" Value: \" + user.calculateTax();\n\n        notificationService.sendNotification(user, message, notificationType);\n    }\n}",
+            "Task1/src/solid/service/UserOperations.java": "package solid.service;\n\nimport solid.user.User;\n\n/**\n * Low Cohesion:</b> The <code>UserOperations</code> interface is too broad and covers multiple\n * responsibilities (user management and notification sending), which are unrelated for some implementing classes.\n */\npublic interface UserOperations {\n    void addUser(User user);\n    void removeUser(User user);\n}",
+            "Task1/src/solid/service/NotificationService.java": "package solid.service;\n\nimport solid.service.senders.EmailNotificationSender;\nimport solid.service.senders.NotificationSender;\nimport solid.service.senders.PushNotificationSender;\nimport solid.service.senders.SMSNotificationSender;\nimport solid.user.AdminUser;\nimport solid.user.User;\n\nimport java.util.HashMap;\nimport java.util.Map;\n\npublic class NotificationService {\n    private final Map<String, NotificationSender> senders = new HashMap<>();\n    public NotificationService() {\n        senders.put(\"EMAIL\", new EmailNotificationSender());\n        senders.put(\"SMS\", new SMSNotificationSender());\n        senders.put(\"PUSH\", new PushNotificationSender());\n    }\n\n    // Method to send a notification based on notification type\n    public void sendNotification(User user, String message, String notificationType) {\n        NotificationSender sender = senders.get(notificationType);\n        if (sender != null) {\n            if (notificationType.equals(\"PUSH\") && !(user instanceof AdminUser)) {\n                throw new UnsupportedOperationException((\"Regular user do not support push notification\"));\n            }\n            sender.send(user, message);\n        }\n    }\n\n}",
+            "Task1/src/solid/service/senders/EmailNotificationSender.java": "package solid.service.senders;\n\nimport solid.user.User;\n\npublic class EmailNotificationSender implements NotificationSender {\n\n    @Override\n    public void send(User user, String message) {\n        System.out.println(\"Sending EMAIL to \" + user.getUsername() + \" -> \" + message);\n    }\n\n}",
+            "Task1/src/solid/service/senders/SMSNotificationSender.java": "package solid.service.senders;\n\nimport solid.user.User;\n\npublic class SMSNotificationSender implements NotificationSender {\n\n    @Override\n    public void send(User user, String message) {\n        System.out.println(\"Sending SMS to \" + user.getUsername() + \" -> \" + message);\n    }\n\n}",
+            "Task1/src/solid/service/senders/PushNotificationSender.java": "package solid.service.senders;\n\nimport solid.user.User;\n\npublic class PushNotificationSender implements NotificationSender {\n\n    @Override\n    public void send(User user, String message) {\n        System.out.println(\"Sending PUSH to \" + user.getUsername() + \" -> \" + message);;\n    }\n\n}",
+            "Task1/src/solid/service/senders/NotificationSender.java": "package solid.service.senders;\n\nimport solid.user.User;\n\npublic interface NotificationSender {\n    void send(User user, String message);\n}"
         },
         "parsed_classes": {
             "Main": {
@@ -16415,8 +16415,8 @@
                         "name": "main",
                         "return_type": "void",
                         "modifiers": [
-                            "public",
-                            "static"
+                            "static",
+                            "public"
                         ],
                         "parameters": [
                             "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
@@ -16425,7 +16425,8 @@
                 ],
                 "fields": [],
                 "extends": null,
-                "implements": []
+                "implements": [],
+                "instantiates_postgres": true
             },
             "User": {
                 "methods": [
@@ -16500,14 +16501,6 @@
                         ]
                     },
                     {
-                        "name": "canDelete",
-                        "return_type": "BasicType(dimensions=[], name=boolean)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": []
-                    },
-                    {
                         "name": "toString",
                         "return_type": "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
                         "modifiers": [
@@ -16544,13 +16537,6 @@
                         "modifiers": [
                             "private"
                         ]
-                    },
-                    {
-                        "name": "role",
-                        "type": "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
-                        "modifiers": [
-                            "public"
-                        ]
                     }
                 ],
                 "extends": null,
@@ -16578,6 +16564,84 @@
                 ],
                 "extends": "User",
                 "implements": []
+            },
+            "PostgresDriver": {
+                "methods": [
+                    {
+                        "name": "save",
+                        "return_type": "BasicType(dimensions=[], name=boolean)",
+                        "modifiers": [
+                            "public"
+                        ],
+                        "parameters": [
+                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                        ]
+                    },
+                    {
+                        "name": "query",
+                        "return_type": "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                        "modifiers": [
+                            "public"
+                        ],
+                        "parameters": [
+                            "BasicType(dimensions=[], name=int)"
+                        ]
+                    },
+                    {
+                        "name": "delete",
+                        "return_type": "BasicType(dimensions=[], name=boolean)",
+                        "modifiers": [
+                            "public"
+                        ],
+                        "parameters": [
+                            "BasicType(dimensions=[], name=int)"
+                        ]
+                    }
+                ],
+                "fields": [
+                    {
+                        "name": "users",
+                        "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
+                        "modifiers": [
+                            "static",
+                            "private"
+                        ]
+                    }
+                ],
+                "extends": null,
+                "implements": [
+                    "DatabaseDriver"
+                ]
+            },
+            "DatabaseDriver": {
+                "methods": [
+                    {
+                        "name": "save",
+                        "return_type": "BasicType(dimensions=[], name=boolean)",
+                        "modifiers": [],
+                        "parameters": [
+                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
+                        ]
+                    },
+                    {
+                        "name": "query",
+                        "return_type": "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
+                        "modifiers": [],
+                        "parameters": [
+                            "BasicType(dimensions=[], name=int)"
+                        ]
+                    },
+                    {
+                        "name": "delete",
+                        "return_type": "BasicType(dimensions=[], name=boolean)",
+                        "modifiers": [],
+                        "parameters": [
+                            "BasicType(dimensions=[], name=int)"
+                        ]
+                    }
+                ],
+                "type": "interface",
+                "extends": []
             },
             "UserService": {
                 "methods": [
@@ -16637,7 +16701,6 @@
                         "name": "databaseDriver",
                         "type": "ReferenceType(arguments=None, dimensions=[], name=DatabaseDriver, sub_type=None)",
                         "modifiers": [
-                            "final",
                             "private"
                         ]
                     }
@@ -16645,8 +16708,7 @@
                 "extends": null,
                 "implements": [
                     "UserOperations"
-                ],
-                "instantiates_postgres": true
+                ]
             },
             "UserOperations": {
                 "methods": [
@@ -16698,90 +16760,6 @@
                 "extends": null,
                 "implements": []
             },
-            "PostgresDriver": {
-                "methods": [
-                    {
-                        "name": "save",
-                        "return_type": "BasicType(dimensions=[], name=boolean)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
-                        ]
-                    },
-                    {
-                        "name": "query",
-                        "return_type": "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "BasicType(dimensions=[], name=int)"
-                        ]
-                    },
-                    {
-                        "name": "delete",
-                        "return_type": "BasicType(dimensions=[], name=boolean)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "BasicType(dimensions=[], name=int)"
-                        ]
-                    }
-                ],
-                "fields": [
-                    {
-                        "name": "users",
-                        "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
-                        "modifiers": [
-                            "private",
-                            "static"
-                        ]
-                    }
-                ],
-                "extends": null,
-                "implements": [
-                    "DatabaseDriver"
-                ]
-            },
-            "DatabaseDriver": {
-                "methods": [
-                    {
-                        "name": "save",
-                        "return_type": "BasicType(dimensions=[], name=boolean)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
-                        ]
-                    },
-                    {
-                        "name": "query",
-                        "return_type": "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "BasicType(dimensions=[], name=int)"
-                        ]
-                    },
-                    {
-                        "name": "delete",
-                        "return_type": "BasicType(dimensions=[], name=boolean)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "BasicType(dimensions=[], name=int)"
-                        ]
-                    }
-                ],
-                "type": "interface",
-                "extends": []
-            },
             "EmailNotificationSender": {
                 "methods": [
                     {
@@ -16866,6 +16844,14 @@
                 ],
                 "interfaces": []
             },
+            "solid.persistence": {
+                "classes": [
+                    "PostgresDriver"
+                ],
+                "interfaces": [
+                    "DatabaseDriver"
+                ]
+            },
             "solid.service": {
                 "classes": [
                     "is",
@@ -16875,15 +16861,7 @@
                     "is"
                 ]
             },
-            "solid.persistence.drivers": {
-                "classes": [
-                    "PostgresDriver"
-                ],
-                "interfaces": [
-                    "DatabaseDriver"
-                ]
-            },
-            "solid.service.sender": {
+            "solid.service.senders": {
                 "classes": [
                     "EmailNotificationSender",
                     "SMSNotificationSender",
@@ -16896,543 +16874,9 @@
         },
         "solid_violations": [
             "SRP",
-            "OCP"
-        ],
-        "detected_violations": {
-            "solid": [
-                {
-                    "principle": "SRP",
-                    "class": "User.java - User",
-                    "reason": "Class has 10 methods, suggesting too many responsibilities"
-                },
-                {
-                    "principle": "DIP",
-                    "class": "UserService.java",
-                    "reason": "Directly instantiates PostgresDriver instead of using dependency injection"
-                },
-                {
-                    "principle": "DIP",
-                    "class": "UserService.java",
-                    "reason": "Missing constructor injection for database driver dependency"
-                }
-            ],
-            "package": [
-                {
-                    "type": "package_structure",
-                    "description": "Interface DatabaseDriver should be in package solid.persistence, but found in solid.persistence.drivers"
-                }
-            ],
-            "dependency_injection": []
-        },
-        "sentiment": {
-            "label": "neutral",
-            "score": 0.0
-        }
-    },
-    "liharry": {
-        "feedback": {
-            "general_comments": "## O\nverall Assessment: Partially implemented\nThe submission includes a basic implementation of the first four steps (SRP, DIP, LSP, and ISP), but does not fully address all aspects of each step. There are some violations of SOLID principles in the code, but these are not addressed in the refactoring process. The overall quality of the implementation is relatively low due to a lack of focus on adherence to best practices.\n\n## R\nefactoring Steps Implementation: Partially implemented\n1. SRP - Fully implemented (User.java has 9 methods)\n2. DIP - Not implemented (direct instantiation of PostgresDriver in UserService.java)\n3. LSP - Not implemented (AdminUser.deleteAccount changes expected behavior)\n4. ISP - Not implemented (DatabaseDriver not in the correct subpackage, and direct instantiation of PostgresDriver in UserService.java)\n5. Package Structure - Partially implemented (Missing required package: solid.persistence.drivers)\n\n## S\nOLID Violations: Multiple violations\n1. DIP - UserService.java directly instantiates PostgresDriver instead of using dependency injection.\n2. ISP - DatabaseDriver interface should be in the solid.persistence package, but found in solid.driver.\n3. LSP - AdminUser.deleteAccount changes expected behavior (it deletes users based on their super admin rights).\n4. SRP - User.java has 9 methods, suggesting too many responsibilities.\n5. Package Structure - PostgresDriver implementation should be in the solid.persistence.drivers package, but found in solid.driver.\n\n## I\nmprovement Suggestions: Specific and actionable changes\n1. Dependency Injection (DI) should be used to provide UserService with a reference to DatabaseDriver through its constructor.\n2. Move PostgresDriver implementation from solid.driver to solid.persistence.drivers.\n3. Remove direct instantiation of PostgresDriver in UserService.java and replace it with a dependency injection.\n4. Refactor User.java methods into smaller, more focused classes that adhere to the Single Responsibility Principle (SRP).\n5. Ensure that all SOLID principles are adhered to throughout the codebase.",
-            "solid_violations": null,
-            "suggestions": null
-        },
-        "java_files": {
-            "SolidPrinciples/src/Main.java": "import solid.service.AdminUserService;\nimport solid.service.UserService;\nimport solid.user.AdminUser;\nimport solid.user.User;\n\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println(\"------------------Adding users-------------------------\");\n        // Create User instances\n        User user1 = new User(1, \"john_doe\", 25, 100000);\n        User user2 = new User(2, \"alice_smith\", 35, 100000);\n        User user3 = new AdminUser(0, \"bob_jones\", 65, 100000, true);\n\n        UserService userService = new UserService();\n        UserService adminUserService = new UserService();\n\n        // Save users 1 and 2 using RegularUserService\n        userService.addUser(user1);\n        userService.addUser(user2);\n\n        adminUserService.addUser(user3);\n\n\n        System.out.println(\"\\n------------------Sending notifications-------------------------\");\n\n        // Send notifications using different services\n        userService.sendTaxNotification(user1, \"Pay your taxes!\", \"EMAIL\");\n        userService.sendTaxNotification(user2, \"Pay your taxes!\", \"SMS\");\n        //regularUserService.sendTaxNotification(user2, \"Pay your taxes!\", \"PUSH\"); //This breaks the code\n\n        adminUserService.sendTaxNotification(user3, \"Pay your taxes!\", \"PUSH\");\n\n        System.out.println(\"\\n------------------Fetching users-------------------------\");\n\n        // Fetch and display user by ID -> there is an encapsulation violation here -> bug proneness\n        userService.getUserById(1);\n        adminUserService.getUserById(0);\n\n        System.out.println(\"\\n------------------Deleting users-------------------------\");\n        // Delete accounts\n        userService.removeUser(user1);\n        adminUserService.removeUser(user2);\n        userService.removeUser(user3);\n\n        adminUserService.removeUser(user3);\n\n    }\n}",
-            "SolidPrinciples/src/solid/driver/PostgresDriver.java": "package solid.driver;\n\nimport solid.user.User;\n\nimport java.util.HashMap;\n\npublic class PostgresDriver implements DatabaseDriver {\n    private static HashMap<Integer, User> users = new HashMap<>();\n\n    // Method to simulate a database query\n    public boolean save(User user) {\n        System.out.println(\"Executing Save SQL: \" + user);\n\n        // Here, you would typically execute the query against a real PostgreSQL database and return a ResultSet.\n        // This is just a simulation, so we'll return a list with the queried users.\n        users.put(user.getId(), user);\n\n        return true;\n    }\n\n    public User query(int id) {\n        System.out.println(\"Executing SQL query\");\n        try {\n            return users.get(id);\n        } catch (IndexOutOfBoundsException  e) {\n            return null;\n        }\n    }\n\n    public boolean delete(int id) {\n        System.out.println(\"Executing SQL delete\");\n        try {\n            users.remove(id);\n            return true;\n        } catch (IndexOutOfBoundsException  e) {\n            return false;\n        }\n    }\n}",
-            "SolidPrinciples/src/solid/driver/DatabaseDriver.java": "package solid.driver;\n\nimport solid.user.User;\n\nimport java.util.HashMap;\n\npublic interface DatabaseDriver {\n    static HashMap<Integer, User> users = new HashMap<>();\n\n    public boolean save(User user);\n\n    public User query(int id);\n\n    public boolean delete(int id);\n}",
-            "SolidPrinciples/src/solid/sender/EmailNotificationSender.java": "package solid.sender;\n\nimport solid.user.User;\n\n\npublic class EmailNotificationSender implements NotificationSender {\n    @Override\n    public void sendNotification(User user, String message) {\n        System.out.println(\"Sending EMAIL to \" + user.getUsername() + \" -> \" + message);\n    }\n}",
-            "SolidPrinciples/src/solid/sender/SMSNotificationSender.java": "package solid.sender;\n\nimport solid.user.User;\n\npublic class SMSNotificationSender implements NotificationSender {\n    @Override\n    public void sendNotification(User user, String message) {\n        System.out.println(\"Sending SMS to \" + user.getUsername() + \" -> \" + message);\n    }\n}",
-            "SolidPrinciples/src/solid/sender/PushNotificationSender.java": "package solid.sender;\n\nimport solid.user.User;\n\npublic class PushNotificationSender implements NotificationSender {\n    @Override\n    public void sendNotification(User user, String message) {\n        System.out.println(\"Sending PUSH to \" + user.getUsername() + \" -> \" + message);\n    }\n}",
-            "SolidPrinciples/src/solid/sender/NotificationSender.java": "package solid.sender;\n\nimport solid.user.User;\n\npublic interface NotificationSender {\n    void sendNotification(User user, String message);\n}",
-            "SolidPrinciples/src/solid/user/User.java": "package solid.user;\n\npublic class User {\n    private int id;\n    private String username;\n    private int age;\n    private double salary;\n\n    // Constructor\n    public User(int id, String username, int age, double salary) {\n        this.id = id;\n        this.username = username;\n        this.age = age;\n        this.salary = salary;\n    }\n\n    // Method to calculate tax based on age and salary\n    public double calculateTax() {\n        double taxRate;\n        if (age < 30) {\n            taxRate = 0.10; // 10% tax rate\n        } else if (age <= 60) {\n            taxRate = 0.20; // 20% tax rate\n        } else {\n            taxRate = 0.15; // 15% tax rate\n        }\n        return salary * taxRate;\n    }\n\n    // Regular users can delete themselves\n    public void deleteAccount() {\n        System.out.println(\"User account deleted: \" + username);\n    }\n\n    // Getters and setters (optional, for accessing private fields)\n    public int getId() {\n        return id;\n    }\n\n    public void setId(int id) {\n        this.id = id;\n    }\n\n    public String getUsername() {\n        return username;\n    }\n\n    public void setUsername(String username) {\n        this.username = username;\n    }\n\n    public int getAge() {\n        return age;\n    }\n\n    public void setAge(int age) {\n        this.age = age;\n    }\n\n    @Override\n    public String toString() {\n        return \"User{\" +\n                \"id=\" + id +\n                \", username='\" + username + '\\'' +\n                \", age=\" + age +\n                \", salary=\" + salary +\n                '}';\n    }\n}",
-            "SolidPrinciples/src/solid/user/AdminUser.java": "package solid.user;\n\n/**\n * Why This Violates the Liskov Substitution Principle:\n * <ul>\n *   <li><b>Unexpected Behavior Change:</b> The <code>AdminUser</code> class overrides the <code>deleteAccount</code> method\n *   to provide different behavior. For regular users, the <code>deleteAccount</code> method always deletes the user account,\n *   but for <code>AdminUser</code>, the deletion is conditional (<code>if (hasSuperAdminRights)</code>), meaning the behavior\n *   is not consistent with the parent class.</li>\n *   <li><b>Client Code Assumptions Broken:</b> Any client code that relies on the <code>deleteAccount</code> method to\n *   always delete an account will break if it encounters an <code>AdminUser</code> with super admin rights. This violates the\n *   Liskov Substitution Principle because the subclass (<code>AdminUser</code>) cannot fully substitute the superclass\n *   (<code>User</code>) without altering the program's expected behavior.</li>\n * </ul>\n */\n\npublic class AdminUser extends User {\n    private boolean hasSuperAdminRights;\n\n    public AdminUser(int id, String username, int age, double salary, boolean hasSuperAdminRights) {\n        super(id, username, age, salary);\n        this.hasSuperAdminRights = hasSuperAdminRights;\n    }\n\n    // check if user has super admin rights\n    public boolean hasSuperAdminRights() {\n        return hasSuperAdminRights;\n    }\n}",
-            "SolidPrinciples/src/solid/service/UserService.java": "package solid.service;\n\nimport solid.driver.DatabaseDriver;\nimport solid.driver.PostgresDriver;\nimport solid.user.User;\n\n/**\n * Why This Violates the Interface Segregation Principle (ISP):\n * <ul>\n *   <li><b>Forces Irrelevant Implementations:</b> The <code>RegularUserService</code> class is forced to implement\n *   methods (<code>sendEmailNotification</code>, <code>sendSMSNotification</code>, <code>sendPushNotification</code>)\n *   that it does not need or use.</li>\n *   <li><b>Unsupported Operations:</b> The class throws <code>UnsupportedOperationException</code> for some of these methods,\n *   which is a clear sign that it is being forced to implement methods that are not relevant to its role.</li>\n *   <li><b>Low Cohesion:</b> The <code>UserOperations</code> interface is too broad and covers multiple\n *   responsibilities (user management and notification sending), which are unrelated for some implementing classes.</li>\n * </ul>\n *\n * <p>\n * Why This Violates the Dependency Inversion Principle (DIP):\n * </p>\n * <ul>\n *   <li><b>High-Level Module Depends on Low-Level Module:</b> The <code>UserService</code> class directly depends on the\n *   concrete <code>PostgresDriver</code> class. This makes it difficult to change the database layer without modifying the\n *   <code>UserService</code> class.</li>\n *   <li><b>Lack of Abstractions:</b> There is no abstraction or interface that defines the behavior of a database driver,\n *   making the <code>UserService</code> class tightly coupled to the <code>PostgresDriver</code>.</li>\n * </ul>\n *\n * <p>\n * Why This Violates the Open-Closed Principle (OCP):\n * </p>\n * <ul>\n *   <li><b>Modification Required for Each New Notification Type:</b> Every time a new notification type is needed\n *   (e.g., \"In-App Message\" or \"Webhook\"), you must modify the <code>sendNotification</code> method to add a new\n *   <code>else if</code> block and create a corresponding method for the new notification type.</li>\n *   <li><b>High Risk of Errors:</b> Frequent modifications increase the risk of introducing bugs, especially if the existing\n *   code is already complex.</li>\n *   <li><b>Difficult to Test and Maintain:</b> As more notification types are added, the <code>NotificationService</code> class\n *   becomes harder to test and maintain due to its increasing size and complexity.</li>\n * </ul>\n *\n * <p>\n * Why This Violates the Single Responsibility Principle (SRP):\n * </p>\n * <ul>\n *   <li><b>Managing User Data:</b> The <code>RegularUserService</code> class has methods like <code>createUser</code> and\n *   <code>deleteUser</code> that handle user data in the database.</li>\n *   <li><b>Sending Notifications:</b> The class also contains methods like <code>sendWelcomeEmail</code> and\n *   <code>sendPasswordResetEmail</code> that are responsible for sending different types of emails.</li>\n * </ul>\n */\n\npublic class UserService implements UserOperations {\n    private final NotificationService notificationService = new NotificationService();\n    private DatabaseDriver postgresDriver;\n\n    public UserService() {\n        // Initialize RegularUserService with a PostgresDriver\n        this.postgresDriver = new PostgresDriver();\n        ;\n    }\n\n    public User getUserById(int id) {\n        User fetchedUser = postgresDriver.query(id);\n\n        if (fetchedUser == null) {\n            System.out.println(\"User with ID \" + id + \" not found.\");\n            return null;\n        }\n        System.out.println(\"Fetched User: \" + fetchedUser.getUsername() + \", \" + fetchedUser.getAge() + \"\\n\");\n        return fetchedUser;\n    }\n\n    @Override\n    public void addUser(User user) {\n        postgresDriver.save(user);\n    }\n\n    @Override\n    public void removeUser(User user) {\n        boolean del = postgresDriver.delete(user.getId());\n        if (del) {\n            user.deleteAccount();\n            System.out.println(\"Account deleted successfully.\\n\");\n        } else {\n            System.out.println(\"User with id \" + user.getId() + \" not found!\\n\");\n        }\n    }\n\n    // Method to send a notification based on notification type\n    public void sendTaxNotification(User user, String message, String notificationType) {\n        message = message + \" Value: \" + user.calculateTax();\n\n        if (notificationType.equals(\"EMAIL\")) {\n            notificationService.sendEmailNotification(user, message);\n        } else if (notificationType.equals(\"SMS\")) {\n            notificationService.sendSMSNotification(user, message);\n        } else if (notificationType.equals(\"PUSH\")) {\n            notificationService.sendPushNotification(user, message);\n        } else {\n            throw new IllegalArgumentException(\"Unknown notification type: \" + notificationType);\n        }\n    }\n}",
-            "SolidPrinciples/src/solid/service/UserOperations.java": "package solid.service;\n\nimport solid.user.User;\n\n/**\n * Low Cohesion:</b> The <code>UserOperations</code> interface is too broad and covers multiple\n * responsibilities (user management and notification sending), which are unrelated for some implementing classes.\n */\npublic interface UserOperations{\n    void addUser(User user);\n    void removeUser(User user);\n}",
-            "SolidPrinciples/src/solid/service/NotificationService.java": "package solid.service;\n\nimport solid.sender.EmailNotificationSender;\nimport solid.sender.NotificationSender;\nimport solid.sender.PushNotificationSender;\nimport solid.sender.SMSNotificationSender;\nimport solid.user.User;\n\npublic class NotificationService  {\n    public NotificationService() {\n    }\n\n    public void sendEmailNotification(User user, String message) {\n        NotificationSender emailNotificationSender = new EmailNotificationSender();\n        emailNotificationSender.sendNotification(user, message);\n    }\n\n    public void sendSMSNotification(User user, String message) {\n        NotificationSender smsNotificationSender = new SMSNotificationSender();\n        smsNotificationSender.sendNotification(user, message);\n    }\n\n    public void sendPushNotification(User user, String message) {\n        NotificationSender pushNotificationSender = new PushNotificationSender();\n        pushNotificationSender.sendNotification(user, message);\n    }\n}"
-        },
-        "parsed_classes": {
-            "Main": {
-                "methods": [
-                    {
-                        "name": "main",
-                        "return_type": "void",
-                        "modifiers": [
-                            "public",
-                            "static"
-                        ],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[None], name=String, sub_type=None)"
-                        ]
-                    }
-                ],
-                "fields": [],
-                "extends": null,
-                "implements": []
-            },
-            "PostgresDriver": {
-                "methods": [
-                    {
-                        "name": "save",
-                        "return_type": "BasicType(dimensions=[], name=boolean)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
-                        ]
-                    },
-                    {
-                        "name": "query",
-                        "return_type": "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "BasicType(dimensions=[], name=int)"
-                        ]
-                    },
-                    {
-                        "name": "delete",
-                        "return_type": "BasicType(dimensions=[], name=boolean)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "BasicType(dimensions=[], name=int)"
-                        ]
-                    }
-                ],
-                "fields": [
-                    {
-                        "name": "users",
-                        "type": "ReferenceType(arguments=[TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=Integer, sub_type=None)), TypeArgument(pattern_type=None, type=ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None))], dimensions=[], name=HashMap, sub_type=None)",
-                        "modifiers": [
-                            "private",
-                            "static"
-                        ]
-                    }
-                ],
-                "extends": null,
-                "implements": [
-                    "DatabaseDriver"
-                ]
-            },
-            "DatabaseDriver": {
-                "methods": [
-                    {
-                        "name": "save",
-                        "return_type": "BasicType(dimensions=[], name=boolean)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
-                        ]
-                    },
-                    {
-                        "name": "query",
-                        "return_type": "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "BasicType(dimensions=[], name=int)"
-                        ]
-                    },
-                    {
-                        "name": "delete",
-                        "return_type": "BasicType(dimensions=[], name=boolean)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "BasicType(dimensions=[], name=int)"
-                        ]
-                    }
-                ],
-                "type": "interface",
-                "extends": []
-            },
-            "EmailNotificationSender": {
-                "methods": [
-                    {
-                        "name": "sendNotification",
-                        "return_type": "void",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
-                            "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
-                        ]
-                    }
-                ],
-                "fields": [],
-                "extends": null,
-                "implements": [
-                    "NotificationSender"
-                ]
-            },
-            "SMSNotificationSender": {
-                "methods": [
-                    {
-                        "name": "sendNotification",
-                        "return_type": "void",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
-                            "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
-                        ]
-                    }
-                ],
-                "fields": [],
-                "extends": null,
-                "implements": [
-                    "NotificationSender"
-                ]
-            },
-            "PushNotificationSender": {
-                "methods": [
-                    {
-                        "name": "sendNotification",
-                        "return_type": "void",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
-                            "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
-                        ]
-                    }
-                ],
-                "fields": [],
-                "extends": null,
-                "implements": [
-                    "NotificationSender"
-                ]
-            },
-            "NotificationSender": {
-                "methods": [
-                    {
-                        "name": "sendNotification",
-                        "return_type": "void",
-                        "modifiers": [],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
-                            "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
-                        ]
-                    }
-                ],
-                "type": "interface",
-                "extends": []
-            },
-            "User": {
-                "methods": [
-                    {
-                        "name": "calculateTax",
-                        "return_type": "BasicType(dimensions=[], name=double)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": []
-                    },
-                    {
-                        "name": "deleteAccount",
-                        "return_type": "void",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": []
-                    },
-                    {
-                        "name": "getId",
-                        "return_type": "BasicType(dimensions=[], name=int)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": []
-                    },
-                    {
-                        "name": "setId",
-                        "return_type": "void",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "BasicType(dimensions=[], name=int)"
-                        ]
-                    },
-                    {
-                        "name": "getUsername",
-                        "return_type": "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": []
-                    },
-                    {
-                        "name": "setUsername",
-                        "return_type": "void",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
-                        ]
-                    },
-                    {
-                        "name": "getAge",
-                        "return_type": "BasicType(dimensions=[], name=int)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": []
-                    },
-                    {
-                        "name": "setAge",
-                        "return_type": "void",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "BasicType(dimensions=[], name=int)"
-                        ]
-                    },
-                    {
-                        "name": "toString",
-                        "return_type": "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": []
-                    }
-                ],
-                "fields": [
-                    {
-                        "name": "id",
-                        "type": "BasicType(dimensions=[], name=int)",
-                        "modifiers": [
-                            "private"
-                        ]
-                    },
-                    {
-                        "name": "username",
-                        "type": "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
-                        "modifiers": [
-                            "private"
-                        ]
-                    },
-                    {
-                        "name": "age",
-                        "type": "BasicType(dimensions=[], name=int)",
-                        "modifiers": [
-                            "private"
-                        ]
-                    },
-                    {
-                        "name": "salary",
-                        "type": "BasicType(dimensions=[], name=double)",
-                        "modifiers": [
-                            "private"
-                        ]
-                    }
-                ],
-                "extends": null,
-                "implements": []
-            },
-            "AdminUser": {
-                "methods": [
-                    {
-                        "name": "hasSuperAdminRights",
-                        "return_type": "BasicType(dimensions=[], name=boolean)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": []
-                    }
-                ],
-                "fields": [
-                    {
-                        "name": "hasSuperAdminRights",
-                        "type": "BasicType(dimensions=[], name=boolean)",
-                        "modifiers": [
-                            "private"
-                        ]
-                    }
-                ],
-                "extends": "User",
-                "implements": []
-            },
-            "UserService": {
-                "methods": [
-                    {
-                        "name": "getUserById",
-                        "return_type": "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "BasicType(dimensions=[], name=int)"
-                        ]
-                    },
-                    {
-                        "name": "addUser",
-                        "return_type": "void",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
-                        ]
-                    },
-                    {
-                        "name": "removeUser",
-                        "return_type": "void",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
-                        ]
-                    },
-                    {
-                        "name": "sendTaxNotification",
-                        "return_type": "void",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
-                            "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)",
-                            "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
-                        ]
-                    }
-                ],
-                "fields": [
-                    {
-                        "name": "notificationService",
-                        "type": "ReferenceType(arguments=None, dimensions=[], name=NotificationService, sub_type=None)",
-                        "modifiers": [
-                            "final",
-                            "private"
-                        ]
-                    },
-                    {
-                        "name": "postgresDriver",
-                        "type": "ReferenceType(arguments=None, dimensions=[], name=DatabaseDriver, sub_type=None)",
-                        "modifiers": [
-                            "private"
-                        ]
-                    }
-                ],
-                "extends": null,
-                "implements": [
-                    "UserOperations"
-                ],
-                "instantiates_postgres": true
-            },
-            "UserOperations": {
-                "methods": [
-                    {
-                        "name": "addUser",
-                        "return_type": "void",
-                        "modifiers": [],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
-                        ]
-                    },
-                    {
-                        "name": "removeUser",
-                        "return_type": "void",
-                        "modifiers": [],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)"
-                        ]
-                    }
-                ],
-                "type": "interface",
-                "extends": []
-            },
-            "NotificationService": {
-                "methods": [
-                    {
-                        "name": "sendEmailNotification",
-                        "return_type": "void",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
-                            "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
-                        ]
-                    },
-                    {
-                        "name": "sendSMSNotification",
-                        "return_type": "void",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
-                            "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
-                        ]
-                    },
-                    {
-                        "name": "sendPushNotification",
-                        "return_type": "void",
-                        "modifiers": [
-                            "public"
-                        ],
-                        "parameters": [
-                            "ReferenceType(arguments=None, dimensions=[], name=User, sub_type=None)",
-                            "ReferenceType(arguments=None, dimensions=[], name=String, sub_type=None)"
-                        ]
-                    }
-                ],
-                "fields": [],
-                "extends": null,
-                "implements": []
-            }
-        },
-        "package_structure": {
-            "solid.driver": {
-                "classes": [
-                    "PostgresDriver"
-                ],
-                "interfaces": [
-                    "DatabaseDriver"
-                ]
-            },
-            "solid.sender": {
-                "classes": [
-                    "EmailNotificationSender",
-                    "SMSNotificationSender",
-                    "PushNotificationSender"
-                ],
-                "interfaces": [
-                    "NotificationSender"
-                ]
-            },
-            "solid.user": {
-                "classes": [
-                    "User",
-                    "overrides"
-                ],
-                "interfaces": []
-            },
-            "solid.service": {
-                "classes": [
-                    "is",
-                    "NotificationService"
-                ],
-                "interfaces": [
-                    "is"
-                ]
-            }
-        },
-        "solid_violations": [
-            "SRP",
+            "OCP",
+            "LSP",
+            "ISP",
             "DIP"
         ],
         "detected_violations": {
@@ -17441,16 +16885,6 @@
                     "principle": "SRP",
                     "class": "User.java - User",
                     "reason": "Class has 9 methods, suggesting too many responsibilities"
-                },
-                {
-                    "principle": "DIP",
-                    "class": "UserService.java",
-                    "reason": "Directly instantiates PostgresDriver instead of using dependency injection"
-                },
-                {
-                    "principle": "DIP",
-                    "class": "UserService.java",
-                    "reason": "Missing constructor injection for database driver dependency"
                 }
             ],
             "package": [
@@ -17460,18 +16894,14 @@
                 },
                 {
                     "type": "package_structure",
-                    "description": "Interface DatabaseDriver should be in package solid.persistence, but found in solid.driver"
-                },
-                {
-                    "type": "package_structure",
-                    "description": "Implementation PostgresDriver should be in package solid.persistence.drivers, but found in solid.driver"
+                    "description": "Implementation PostgresDriver should be in package solid.persistence.drivers, but found in solid.persistence"
                 }
             ],
             "dependency_injection": []
         },
         "sentiment": {
-            "label": "positive",
-            "score": 0.7174
+            "label": "negative",
+            "score": -0.9004
         }
     }
 }
