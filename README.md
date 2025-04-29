@@ -106,3 +106,4 @@ python evaluation_phase.py path/to/submission.zip
 ## Next Steps
 
 1. Add the second task as well to this app.
+2. Give an option for intructor to submit feedback and adjust ratings.

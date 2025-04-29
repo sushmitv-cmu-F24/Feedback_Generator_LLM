@@ -6,7 +6,6 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.utils import secure_filename
 from evaluation_phase import extract_java_files_from_zip, evaluate_submission, inspect_faiss_index
-from feedback_metrics import FeedbackMetrics
 from feedback_evaluation import FeedbackEvaluation
 from reinforcement import FeedbackReinforcementLearning
 import atexit
@@ -38,7 +37,6 @@ os.makedirs('static/js', exist_ok=True)
 os.makedirs('config', exist_ok=True)
 
 # Initialize feedback metrics and reinforcement learning
-metrics = FeedbackMetrics()
 reinforcement = FeedbackReinforcementLearning(config_file=app.config['RL_CONFIG'])
 
 # Cache for generated feedback
@@ -709,13 +707,6 @@ def student_view(student_id):
             print(f"⚠️ Error calculating feedback metrics: {e}")
             import traceback
             traceback.print_exc()
-    
-    # Add standard quality metrics
-    quality_metrics = metrics.evaluate_feedback(
-        feedback_text, 
-        evaluation_result.get('detected_violations', [])
-    )
-    evaluation_result['quality_metrics'] = quality_metrics
     
     # Format the feedback as markdown with proper headers for nicer display
     formatted_feedback = format_feedback_as_markdown(evaluation_result['generated_feedback'])
@@ -1502,38 +1493,6 @@ def reinforcement_dashboard():
         traceback.print_exc()
         flash(f"Error loading reinforcement dashboard: {str(e)}", "danger")
         return redirect(url_for('index'))
-
-# Helper functions for dashboard
-def calculate_moving_average(values, window_size=2):
-    """Calculate moving average for values."""
-    if len(values) < window_size:
-        return values
-    
-    result = []
-    for i in range(len(values) - window_size + 1):
-        window = values[i:i+window_size]
-        result.append(sum(window) / len(window))
-    return result
-
-def get_trend(values):
-    """Determine trend (improving, declining, stable) from values."""
-    if len(values) < 2:
-        return "stable"
-    
-    # Get first and last values for comparison
-    first_values = values[:min(3, len(values))]  # First up to 3 values
-    last_values = values[-min(3, len(values)):]  # Last up to 3 values
-    
-    first_avg = sum(first_values) / len(first_values)
-    last_avg = sum(last_values) / len(last_values)
-    
-    # Determine trend based on difference
-    if last_avg > first_avg + 0.1:  # 10% improvement
-        return "improving"
-    elif last_avg < first_avg - 0.1:  # 10% decline
-        return "declining"
-    else:
-        return "stable"
 
 @app.context_processor
 def inject_now():
